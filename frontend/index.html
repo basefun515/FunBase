@@ -924,7 +924,9 @@
                 
                 // Get current block
                 const currentBlock = await provider.getBlockNumber();
-                const fromBlock = Math.max(0, currentBlock - 5000); // Last 5k blocks
+                const fromBlock = Math.max(0, currentBlock - 50000); // Increased to 50k blocks to catch older tokens
+                
+                console.log(`Searching from block ${fromBlock} to ${currentBlock}`);
                 
                 // Get TokenCreated events
                 const filter = tempFactory.filters.TokenCreated();
@@ -933,7 +935,7 @@
                 console.log("Found tokens:", events.length);
                 
                 if (events.length === 0) {
-                    tokensGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No tokens created yet. Be the first!</p>';
+                    tokensGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No tokens found. Try creating one!</p>';
                     return;
                 }
 
@@ -954,6 +956,49 @@
                 }
             } catch (error) {
                 console.error('Error loading tokens:', error);
+                // If the range is too large, try a smaller range
+                if (error.message && error.message.includes('query returned more than')) {
+                    console.log("Too many results, trying smaller range...");
+                    await loadTokensWithSmallerRange();
+                } else {
+                    document.getElementById('tokensGrid').innerHTML = 
+                        '<p style="text-align: center; color: var(--text-secondary);">Unable to load tokens</p>';
+                }
+            }
+        }
+
+        // Fallback for smaller range
+        async function loadTokensWithSmallerRange() {
+            try {
+                const tokensGrid = document.getElementById('tokensGrid');
+                const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
+                const currentBlock = await provider.getBlockNumber();
+                const fromBlock = Math.max(0, currentBlock - 10000); // Fallback to 10k blocks
+                
+                const filter = tempFactory.filters.TokenCreated();
+                const events = await tempFactory.queryFilter(filter, fromBlock, currentBlock);
+                
+                if (events.length === 0) {
+                    tokensGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No recent tokens found</p>';
+                    return;
+                }
+
+                tokensGrid.innerHTML = '';
+                
+                for (let i = events.length - 1; i >= 0 && i >= events.length - 10; i--) {
+                    const event = events[i];
+                    const tokenAddress = event.args.token;
+                    
+                    try {
+                        const details = await tempFactory.getTokenDetails(tokenAddress);
+                        const tokenCard = createTokenCard(tokenAddress, details);
+                        tokensGrid.appendChild(tokenCard);
+                    } catch (error) {
+                        console.error('Error loading token:', error);
+                    }
+                }
+            } catch (error) {
+                console.error('Fallback also failed:', error);
                 document.getElementById('tokensGrid').innerHTML = 
                     '<p style="text-align: center; color: var(--text-secondary);">Unable to load tokens</p>';
             }
