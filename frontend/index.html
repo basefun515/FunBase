@@ -815,9 +815,116 @@
                 // Mock data for demo
                 document.getElementById('totalVolume').textContent = '$0';
                 document.getElementById('totalUsers').textContent = '0';
+                
+                // Load tokens after stats
+                await loadTokens();
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
+        }
+
+        // Load tokens from blockchain
+        async function loadTokens() {
+            try {
+                console.log("Loading tokens...");
+                const tokensGrid = document.getElementById('tokensGrid');
+                tokensGrid.innerHTML = '<div class="loading"></div>';
+
+                if (!provider) {
+                    provider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org');
+                }
+
+                const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
+                
+                // Get past TokenCreated events
+                const filter = tempFactory.filters.TokenCreated();
+                const events = await tempFactory.queryFilter(filter, -100000); // Last 100k blocks
+                
+                console.log("Found tokens:", events.length);
+                
+                if (events.length === 0) {
+                    tokensGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No tokens created yet. Be the first!</p>';
+                    return;
+                }
+
+                tokensGrid.innerHTML = '';
+                
+                // Display tokens in reverse order (newest first)
+                for (let i = events.length - 1; i >= 0; i--) {
+                    const event = events[i];
+                    const tokenAddress = event.args.token;
+                    
+                    try {
+                        // Get token details
+                        const details = await tempFactory.getTokenDetails(tokenAddress);
+                        const tokenCard = createTokenCard(tokenAddress, details);
+                        tokensGrid.appendChild(tokenCard);
+                    } catch (error) {
+                        console.error('Error loading token details:', error);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading tokens:', error);
+                document.getElementById('tokensGrid').innerHTML = 
+                    '<p style="text-align: center; color: var(--text-secondary);">Failed to load tokens</p>';
+            }
+        }
+
+        // Create token card from blockchain data
+        function createTokenCard(address, details) {
+            const card = document.createElement('div');
+            card.className = 'token-card';
+            card.onclick = () => openTokenModal(address, details);
+            
+            const info = details.info;
+            const stats = details.stats;
+            const price = ethers.utils.formatEther(details.price);
+            
+            card.innerHTML = `
+                <div class="token-header">
+                    <div class="token-image">${info.symbol.charAt(0)}</div>
+                    <div class="token-info">
+                        <div class="token-name">${info.name}</div>
+                        <div class="token-symbol">${info.symbol}</div>
+                    </div>
+                </div>
+                <div class="token-stats">
+                    <div class="token-stat">
+                        <div class="token-stat-label">Price</div>
+                        <div class="token-stat-value">${parseFloat(price).toFixed(8)} ETH</div>
+                    </div>
+                    <div class="token-stat">
+                        <div class="token-stat-label">Market Cap</div>
+                        <div class="token-stat-value">${formatNumber(parseFloat(ethers.utils.formatEther(info.marketCap)))}</div>
+                    </div>
+                    <div class="token-stat">
+                        <div class="token-stat-label">Volume</div>
+                        <div class="token-stat-value">${formatNumber(parseFloat(ethers.utils.formatEther(stats.totalVolume)))}</div>
+                    </div>
+                    <div class="token-stat">
+                        <div class="token-stat-label">Status</div>
+                        <div class="token-stat-value ${info.isGraduated ? 'green' : ''}">${info.isGraduated ? 'Graduated' : 'Active'}</div>
+                    </div>
+                </div>
+                ${info.description ? `<p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">${info.description.substring(0, 100)}${info.description.length > 100 ? '...' : ''}</p>` : ''}
+            `;
+            
+            return card;
+        }
+
+        // Open token modal
+        function openTokenModal(address, details) {
+            // This would open a detailed view with trading interface
+            // For now, just show the address
+            showToast(`Token: ${address.slice(0, 6)}...${address.slice(-4)}`, 'success');
+        }
+
+        // Format number utility
+        function formatNumber(num) {
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return num.toFixed(2);
         }
 
         // Handle create token
@@ -871,7 +978,7 @@
                 
             } catch (error) {
                 console.error('Error creating token:', error);
-                showToast(error.message || 'Failed to create token', 'error');
+                showToast(error.reason || error.message || 'Failed to create token', 'error');
             } finally {
                 button.disabled = false;
                 button.textContent = originalText;
