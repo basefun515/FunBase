@@ -485,123 +485,6 @@
             resize: vertical;
         }
 
-        .file-upload {
-            position: relative;
-            display: inline-block;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .file-upload input[type="file"] {
-            position: absolute;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .file-upload-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            border: 2px dashed var(--border);
-            border-radius: 8px;
-            transition: all 0.3s;
-            background: var(--dark);
-        }
-
-        .file-upload:hover .file-upload-label {
-            border-color: var(--primary);
-            background: rgba(0, 82, 255, 0.05);
-        }
-
-        /* Trade Panel */
-        .trade-panel {
-            background: var(--light);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--border);
-        }
-
-        .trade-tabs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .trade-tab {
-            padding: 0.75rem;
-            background: var(--dark);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        .trade-tab.active {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 1rem;
-        }
-
-        .input-group input {
-            padding-right: 4rem;
-        }
-
-        .input-suffix {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .price-info {
-            background: var(--dark);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .price-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .price-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .price-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .price-value {
-            font-weight: 500;
-        }
-
-        /* Chart */
-        .chart-container {
-            background: var(--light);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--border);
-            margin-bottom: 2rem;
-        }
-
         /* Loading */
         .loading {
             display: inline-block;
@@ -799,55 +682,6 @@
         </div>
     </div>
 
-    <!-- Token Detail Modal -->
-    <div class="modal" id="tokenModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalTokenName">Token Name</h2>
-                <button class="close-btn" onclick="closeModal('tokenModal')">&times;</button>
-            </div>
-            
-            <!-- Chart -->
-            <div class="chart-container">
-                <canvas id="priceChart"></canvas>
-            </div>
-
-            <!-- Trade Panel -->
-            <div class="trade-panel">
-                <div class="trade-tabs">
-                    <button class="trade-tab active" onclick="setTradeMode('buy')">Buy</button>
-                    <button class="trade-tab" onclick="setTradeMode('sell')">Sell</button>
-                </div>
-                
-                <form id="tradeForm">
-                    <div class="input-group">
-                        <input type="number" class="form-input" id="tradeAmount" placeholder="0.0" step="0.01" required>
-                        <span class="input-suffix" id="tradeSuffix">ETH</span>
-                    </div>
-                    
-                    <div class="price-info">
-                        <div class="price-row">
-                            <span class="price-label">Price</span>
-                            <span class="price-value" id="tokenPrice">0.000001 ETH</span>
-                        </div>
-                        <div class="price-row">
-                            <span class="price-label">You'll receive</span>
-                            <span class="price-value" id="receiveAmount">0 TOKENS</span>
-                        </div>
-                        <div class="price-row">
-                            <span class="price-label">Platform fee (1%)</span>
-                            <span class="price-value" id="platformFee">0 ETH</span>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn-primary" style="width: 100%;" id="tradeButton">
-                        Buy
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <div class="toast-icon" id="toastIcon"></div>
@@ -855,8 +689,9 @@
     </div>
 
     <script>
-        // Contract addresses - REPLACE THESE WITH YOUR DEPLOYED ADDRESSES
-        const FACTORY_ADDRESS = '0x7730469828858529df36A22efB08520C73362244'; // Replace with deployed factory
+        // YOUR DEPLOYED CONTRACT ADDRESS
+        const FACTORY_ADDRESS = '0x7730469828858529df36A22efB08520C73362244'; // Your deployed factory on Base Sepolia
+        
         const FACTORY_ABI = [
             "function createToken(string name, string symbol, string description, string imageUrl, string twitter, string telegram, string website) payable returns (address)",
             "function buyToken(address token, uint256 minTokensOut) payable returns (uint256)",
@@ -865,27 +700,16 @@
             "function tokenCreationFee() view returns (uint256)",
             "function totalTokensCreated() view returns (uint256)",
             "function totalGraduatedTokens() view returns (uint256)",
-            "function getUserTokens(address user) view returns (address[])",
-            "event TokenCreated(address indexed token, address indexed creator, string name, string symbol, uint256 timestamp)",
-            "event TokenPurchased(address indexed token, address indexed buyer, uint256 ethIn, uint256 tokensOut, uint256 newPrice)",
-            "event TokenSold(address indexed token, address indexed seller, uint256 tokensIn, uint256 ethOut, uint256 newPrice)"
-        ];
-
-        const ERC20_ABI = [
-            "function approve(address spender, uint256 amount) returns (bool)",
-            "function balanceOf(address account) view returns (uint256)",
-            "function symbol() view returns (string)",
-            "function decimals() view returns (uint8)"
+            "event TokenCreated(address indexed token, address indexed creator, string name, string symbol, uint256 timestamp)"
         ];
 
         // Global variables
         let provider, signer, factory, userAddress;
-        let currentToken = null;
-        let tradeMode = 'buy';
-        let priceChart = null;
 
         // Initialize app
         async function init() {
+            console.log("Initializing app...");
+            
             // Check if MetaMask is installed
             if (typeof window.ethereum === 'undefined') {
                 showToast('Please install MetaMask to use this app', 'error');
@@ -896,38 +720,38 @@
             document.getElementById('connectWallet').addEventListener('click', connectWallet);
             document.getElementById('createTokenBtn').addEventListener('click', () => openModal('createModal'));
             document.getElementById('createTokenForm').addEventListener('submit', handleCreateToken);
-            document.getElementById('tradeForm').addEventListener('submit', handleTrade);
-            document.getElementById('tradeAmount').addEventListener('input', updateTradePreview);
 
             // Filter tabs
             document.querySelectorAll('.filter-tab').forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
                     e.target.classList.add('active');
-                    loadTokens(e.target.dataset.filter);
                 });
             });
 
-            // Load initial data
-            await loadStats();
-            await loadTokens('all');
-
-            // Set up real-time updates
-            setInterval(loadStats, 30000); // Update stats every 30 seconds
-            setInterval(() => loadTokens(getCurrentFilter()), 10000); // Update tokens every 10 seconds
+            // Set up provider for read-only operations
+            try {
+                provider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org');
+                await loadStats();
+            } catch (error) {
+                console.error('Error setting up provider:', error);
+            }
         }
 
         // Connect wallet
         async function connectWallet() {
             try {
+                console.log("Connecting wallet...");
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 userAddress = accounts[0];
                 
                 // Check network
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                if (chainId !== '0x2105') { // Base mainnet
-                    showToast('Please switch to Base network', 'error');
-                    await switchToBase();
+                console.log("Current chain ID:", chainId);
+                
+                if (chainId !== '0x14a34') { // Base Sepolia = 84532
+                    showToast('Please switch to Base Sepolia network', 'error');
+                    await switchToBaseSepolia();
                     return;
                 }
 
@@ -941,34 +765,35 @@
                     userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
                 
                 showToast('Wallet connected!', 'success');
+                console.log("Wallet connected:", userAddress);
             } catch (error) {
                 console.error('Connection error:', error);
                 showToast('Failed to connect wallet', 'error');
             }
         }
 
-        // Switch to Base network
-        async function switchToBase() {
+        // Switch to Base Sepolia network
+        async function switchToBaseSepolia() {
             try {
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x2105' }], // Base mainnet
+                    params: [{ chainId: '0x14a34' }], // 84532 in hex
                 });
             } catch (error) {
                 if (error.code === 4902) {
-                    // Add Base network
+                    // Add Base Sepolia network
                     await window.ethereum.request({
                         method: 'wallet_addEthereumChain',
                         params: [{
-                            chainId: '0x2105',
-                            chainName: 'Base',
+                            chainId: '0x14a34',
+                            chainName: 'Base Sepolia',
                             nativeCurrency: {
                                 name: 'Ethereum',
                                 symbol: 'ETH',
                                 decimals: 18
                             },
-                            rpcUrls: ['https://mainnet.base.org'],
-                            blockExplorerUrls: ['https://basescan.org']
+                            rpcUrls: ['https://sepolia.base.org'],
+                            blockExplorerUrls: ['https://sepolia.basescan.org']
                         }]
                     });
                 }
@@ -978,10 +803,7 @@
         // Load stats
         async function loadStats() {
             try {
-                if (!provider) {
-                    provider = new ethers.providers.JsonRpcProvider('https://mainnet.base.org');
-                }
-                
+                console.log("Loading stats...");
                 const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
                 
                 const totalTokens = await tempFactory.totalTokensCreated();
@@ -991,74 +813,11 @@
                 document.getElementById('graduatedTokens').textContent = graduatedTokens.toString();
                 
                 // Mock data for demo
-                document.getElementById('totalVolume').textContent = ' + formatNumber(Math.random() * 1000000);
-                document.getElementById('totalUsers').textContent = formatNumber(Math.floor(Math.random() * 10000));
+                document.getElementById('totalVolume').textContent = '$0';
+                document.getElementById('totalUsers').textContent = '0';
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
-        }
-
-        // Load tokens
-        async function loadTokens(filter) {
-            try {
-                const tokensGrid = document.getElementById('tokensGrid');
-                tokensGrid.innerHTML = '<div class="loading"></div>';
-
-                // In production, you would fetch real tokens from your backend or events
-                // For demo, we'll create mock data
-                const mockTokens = generateMockTokens(12);
-                
-                tokensGrid.innerHTML = '';
-                mockTokens.forEach(token => {
-                    tokensGrid.appendChild(createTokenCard(token));
-                });
-            } catch (error) {
-                console.error('Error loading tokens:', error);
-                document.getElementById('tokensGrid').innerHTML = 
-                    '<p style="text-align: center; color: var(--text-secondary);">Failed to load tokens</p>';
-            }
-        }
-
-        // Create token card
-        function createTokenCard(token) {
-            const card = document.createElement('div');
-            card.className = 'token-card';
-            card.onclick = () => openTokenModal(token);
-            
-            const priceChange = ((Math.random() - 0.5) * 100).toFixed(2);
-            const isPositive = priceChange > 0;
-            
-            card.innerHTML = `
-                <div class="token-header">
-                    <div class="token-image">${token.symbol.charAt(0)}</div>
-                    <div class="token-info">
-                        <div class="token-name">${token.name}</div>
-                        <div class="token-symbol">${token.symbol}</div>
-                    </div>
-                </div>
-                <div class="token-stats">
-                    <div class="token-stat">
-                        <div class="token-stat-label">Price</div>
-                        <div class="token-stat-value">${token.price.toFixed(6)}</div>
-                    </div>
-                    <div class="token-stat">
-                        <div class="token-stat-label">24h Change</div>
-                        <div class="token-stat-value ${isPositive ? 'green' : 'red'}">
-                            ${isPositive ? '+' : ''}${priceChange}%
-                        </div>
-                    </div>
-                    <div class="token-stat">
-                        <div class="token-stat-label">Market Cap</div>
-                        <div class="token-stat-value">${formatNumber(token.marketCap)}</div>
-                    </div>
-                    <div class="token-stat">
-                        <div class="token-stat-label">Volume</div>
-                        <div class="token-stat-value">${formatNumber(token.volume)}</div>
-                    </div>
-                </div>
-            `;
-            
-            return card;
         }
 
         // Handle create token
@@ -1078,13 +837,14 @@
             try {
                 const name = document.getElementById('tokenName').value;
                 const symbol = document.getElementById('tokenSymbol').value;
-                const description = document.getElementById('tokenDescription').value;
-                const imageUrl = document.getElementById('tokenImage').value;
-                const twitter = document.getElementById('tokenTwitter').value;
-                const telegram = document.getElementById('tokenTelegram').value;
-                const website = document.getElementById('tokenWebsite').value;
+                const description = document.getElementById('tokenDescription').value || '';
+                const imageUrl = document.getElementById('tokenImage').value || '';
+                const twitter = document.getElementById('tokenTwitter').value || '';
+                const telegram = document.getElementById('tokenTelegram').value || '';
+                const website = document.getElementById('tokenWebsite').value || '';
 
                 const fee = await factory.tokenCreationFee();
+                console.log("Creation fee:", ethers.utils.formatEther(fee));
                 
                 const tx = await factory.createToken(
                     name, symbol, description, imageUrl, twitter, telegram, website,
@@ -1092,8 +852,11 @@
                 );
                 
                 showToast('Creating token... Please wait', 'success');
+                console.log("Transaction sent:", tx.hash);
                 
                 const receipt = await tx.wait();
+                console.log("Transaction confirmed:", receipt);
+                
                 const event = receipt.events.find(e => e.event === 'TokenCreated');
                 const tokenAddress = event.args.token;
                 
@@ -1103,208 +866,12 @@
                 // Reset form
                 e.target.reset();
                 
-                // Reload tokens
-                await loadTokens('new');
+                // Reload stats
+                await loadStats();
                 
             } catch (error) {
                 console.error('Error creating token:', error);
                 showToast(error.message || 'Failed to create token', 'error');
-            } finally {
-                button.disabled = false;
-                button.textContent = originalText;
-            }
-        }
-
-        // Open token modal
-        async function openTokenModal(token) {
-            currentToken = token;
-            document.getElementById('modalTokenName').textContent = token.name;
-            
-            // Initialize chart
-            initPriceChart();
-            
-            // Set trade mode to buy
-            setTradeMode('buy');
-            
-            openModal('tokenModal');
-            
-            // Load token details
-            if (token.address && factory) {
-                try {
-                    const details = await factory.getTokenDetails(token.address);
-                    // Update UI with real details
-                    updateTokenModal(details);
-                } catch (error) {
-                    console.error('Error loading token details:', error);
-                }
-            }
-        }
-
-        // Initialize price chart
-        function initPriceChart() {
-            const ctx = document.getElementById('priceChart').getContext('2d');
-            
-            if (priceChart) {
-                priceChart.destroy();
-            }
-            
-            // Generate mock price data
-            const labels = [];
-            const data = [];
-            const basePrice = currentToken.price;
-            
-            for (let i = 23; i >= 0; i--) {
-                labels.push(`${i}h`);
-                data.push(basePrice * (0.8 + Math.random() * 0.4));
-            }
-            
-            priceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Price',
-                        data: data,
-                        borderColor: '#0052FF',
-                        backgroundColor: 'rgba(0, 82, 255, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: '#8B92A8'
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: '#8B92A8',
-                                callback: function(value) {
-                                    return '
-                 + value.toFixed(6);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Set trade mode
-        function setTradeMode(mode) {
-            tradeMode = mode;
-            document.querySelectorAll('.trade-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            const suffix = document.getElementById('tradeSuffix');
-            const button = document.getElementById('tradeButton');
-            
-            if (mode === 'buy') {
-                suffix.textContent = 'ETH';
-                button.textContent = 'Buy';
-                button.style.background = 'linear-gradient(135deg, #00DC82, #00D4FF)';
-            } else {
-                suffix.textContent = currentToken.symbol;
-                button.textContent = 'Sell';
-                button.style.background = 'linear-gradient(135deg, #FF3366, #FF6B6B)';
-            }
-            
-            updateTradePreview();
-        }
-
-        // Update trade preview
-        async function updateTradePreview() {
-            const amount = parseFloat(document.getElementById('tradeAmount').value) || 0;
-            const receiveElement = document.getElementById('receiveAmount');
-            const feeElement = document.getElementById('platformFee');
-            
-            if (amount <= 0) {
-                receiveElement.textContent = '0 ' + (tradeMode === 'buy' ? currentToken.symbol : 'ETH');
-                feeElement.textContent = '0 ETH';
-                return;
-            }
-            
-            const fee = amount * 0.01; // 1% fee
-            
-            if (tradeMode === 'buy') {
-                // Calculate tokens out
-                const tokensOut = (amount - fee) / currentToken.price;
-                receiveElement.textContent = formatNumber(tokensOut) + ' ' + currentToken.symbol;
-                feeElement.textContent = fee.toFixed(6) + ' ETH';
-            } else {
-                // Calculate ETH out
-                const ethOut = amount * currentToken.price;
-                const ethFee = ethOut * 0.01;
-                receiveElement.textContent = (ethOut - ethFee).toFixed(6) + ' ETH';
-                feeElement.textContent = ethFee.toFixed(6) + ' ETH';
-            }
-        }
-
-        // Handle trade
-        async function handleTrade(e) {
-            e.preventDefault();
-            
-            if (!signer) {
-                showToast('Please connect your wallet first', 'error');
-                return;
-            }
-            
-            const button = e.target.querySelector('button[type="submit"]');
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.innerHTML = '<span class="loading"></span> Processing...';
-            
-            try {
-                const amount = parseFloat(document.getElementById('tradeAmount').value);
-                
-                if (tradeMode === 'buy') {
-                    const value = ethers.utils.parseEther(amount.toString());
-                    const minTokensOut = 0; // In production, calculate slippage
-                    
-                    const tx = await factory.buyToken(currentToken.address, minTokensOut, { value });
-                    showToast('Buying tokens... Please wait', 'success');
-                    await tx.wait();
-                    showToast('Purchase successful!', 'success');
-                } else {
-                    // First approve token
-                    const tokenContract = new ethers.Contract(currentToken.address, ERC20_ABI, signer);
-                    const tokenAmount = ethers.utils.parseEther(amount.toString());
-                    
-                    const approval = await tokenContract.approve(FACTORY_ADDRESS, tokenAmount);
-                    showToast('Approving tokens...', 'success');
-                    await approval.wait();
-                    
-                    const minEthOut = 0; // In production, calculate slippage
-                    const tx = await factory.sellToken(currentToken.address, tokenAmount, minEthOut);
-                    showToast('Selling tokens... Please wait', 'success');
-                    await tx.wait();
-                    showToast('Sale successful!', 'success');
-                }
-                
-                // Reset form
-                e.target.reset();
-                updateTradePreview();
-                
-            } catch (error) {
-                console.error('Trade error:', error);
-                showToast(error.message || 'Transaction failed', 'error');
             } finally {
                 button.disabled = false;
                 button.textContent = originalText;
@@ -1336,38 +903,6 @@
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
-        }
-
-        function formatNumber(num) {
-            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-            return num.toFixed(2);
-        }
-
-        function getCurrentFilter() {
-            return document.querySelector('.filter-tab.active').dataset.filter;
-        }
-
-        function generateMockTokens(count) {
-            const names = ['Based Pepe', 'Moon Cat', 'Rocket Doge', 'Diamond Hands', 'WAGMI Coin', 'Hopium Token'];
-            const symbols = ['BPEPE', 'MCAT', 'RDOGE', 'DIAMOND', 'WAGMI', 'HOPIUM'];
-            const tokens = [];
-            
-            for (let i = 0; i < count; i++) {
-                const idx = i % names.length;
-                tokens.push({
-                    address: '0x' + Math.random().toString(16).substr(2, 40),
-                    name: names[idx] + (i >= names.length ? ' ' + Math.floor(i / names.length + 1) : ''),
-                    symbol: symbols[idx],
-                    price: Math.random() * 0.001,
-                    marketCap: Math.random() * 1000000,
-                    volume: Math.random() * 100000,
-                    change24h: (Math.random() - 0.5) * 100
-                });
-            }
-            
-            return tokens;
         }
 
         // Listen for account changes
