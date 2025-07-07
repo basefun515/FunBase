@@ -625,6 +625,68 @@
         </div>
     </div>
 
+    <!-- Token Trading Modal -->
+    <div class="modal" id="tradeModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="tradeTokenName">Token Name</h2>
+                <button class="close-btn" onclick="closeModal('tradeModal')">&times;</button>
+            </div>
+            
+            <!-- Token Info -->
+            <div style="margin-bottom: 2rem; padding: 1rem; background: var(--dark); border-radius: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Symbol</div>
+                        <div id="tradeTokenSymbol" style="font-weight: 600;"></div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Price</div>
+                        <div id="tradeTokenPrice" style="font-weight: 600;"></div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Market Cap</div>
+                        <div id="tradeTokenMarketCap" style="font-weight: 600;"></div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Liquidity</div>
+                        <div id="tradeTokenLiquidity" style="font-weight: 600;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trade Panel -->
+            <div style="background: var(--dark); border-radius: 12px; padding: 1.5rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <button class="btn-primary" style="padding: 0.75rem;" id="buyTab" onclick="setTradeMode('buy')">Buy</button>
+                    <button class="btn-secondary" style="padding: 0.75rem;" id="sellTab" onclick="setTradeMode('sell')">Sell</button>
+                </div>
+                
+                <form id="tradeForm">
+                    <div style="position: relative; margin-bottom: 1rem;">
+                        <input type="number" class="form-input" id="tradeAmount" placeholder="0.0" step="0.001" min="0.001" required>
+                        <span style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);" id="tradeSuffix">ETH</span>
+                    </div>
+                    
+                    <div style="background: var(--light); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">You'll receive</span>
+                            <span id="receiveAmount">0 TOKENS</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary);">Platform fee (1%)</span>
+                            <span id="platformFee">0 ETH</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" style="width: 100%;" id="tradeButton">
+                        Buy
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <div class="toast-icon" id="toastIcon"></div>
@@ -636,6 +698,8 @@
         const FACTORY_ADDRESS = '0x7730469828858529df36A22efB08520C73362244';
         const FACTORY_ABI = [
             "function createToken(string name, string symbol, string description, string imageUrl, string twitter, string telegram, string website) payable returns (address)",
+            "function buyToken(address token, uint256 minTokensOut) payable returns (uint256)",
+            "function sellToken(address token, uint256 tokensIn, uint256 minEthOut) returns (uint256)",
             "function tokenCreationFee() view returns (uint256)",
             "function totalTokensCreated() view returns (uint256)",
             "function totalGraduatedTokens() view returns (uint256)",
@@ -643,8 +707,17 @@
             "event TokenCreated(address indexed token, address indexed creator, string name, string symbol, uint256 timestamp)"
         ];
 
+        const ERC20_ABI = [
+            "function approve(address spender, uint256 amount) returns (bool)",
+            "function balanceOf(address account) view returns (uint256)",
+            "function allowance(address owner, address spender) view returns (uint256)"
+        ];
+
         // Global variables
         let provider, signer, factory, userAddress;
+        let currentToken = null;
+        let currentTokenDetails = null;
+        let tradeMode = 'buy';
 
         // Helper functions
         function openModal(modalId) {
@@ -855,7 +928,7 @@
             
             // Add click handler
             card.addEventListener('click', () => {
-                showToast(`Token: ${info.name} (${address.slice(0, 6)}...${address.slice(-4)})`, 'success');
+                openTradeModal(address, details);
             });
             
             return card;
@@ -920,6 +993,8 @@
             document.getElementById('connectWallet').addEventListener('click', connectWallet);
             document.getElementById('createTokenBtn').addEventListener('click', () => openModal('createModal'));
             document.getElementById('createTokenForm').addEventListener('submit', handleCreateToken);
+            document.getElementById('tradeForm').addEventListener('submit', handleTrade);
+            document.getElementById('tradeAmount').addEventListener('input', updateTradePreview);
 
             // Load initial data
             try {
@@ -977,6 +1052,137 @@
 
         // Initialize on load
         window.addEventListener('DOMContentLoaded', init);
+
+        // Trading functions
+        function openTradeModal(tokenAddress, details) {
+            currentToken = tokenAddress;
+            currentTokenDetails = details;
+            
+            // Update modal info
+            document.getElementById('tradeTokenName').textContent = details.info.name;
+            document.getElementById('tradeTokenSymbol').textContent = details.info.symbol;
+            document.getElementById('tradeTokenPrice').textContent = parseFloat(ethers.utils.formatEther(details.price)).toFixed(8) + ' ETH';
+            document.getElementById('tradeTokenMarketCap').textContent = '
+</body>
+</html> + formatNumber(parseFloat(ethers.utils.formatEther(details.info.marketCap)));
+            document.getElementById('tradeTokenLiquidity').textContent = parseFloat(ethers.utils.formatEther(details.curve.ethReserve)).toFixed(4) + ' ETH';
+            
+            setTradeMode('buy');
+            openModal('tradeModal');
+        }
+
+        function setTradeMode(mode) {
+            tradeMode = mode;
+            
+            const buyTab = document.getElementById('buyTab');
+            const sellTab = document.getElementById('sellTab');
+            const suffix = document.getElementById('tradeSuffix');
+            const button = document.getElementById('tradeButton');
+            
+            if (mode === 'buy') {
+                buyTab.className = 'btn-primary';
+                buyTab.style.padding = '0.75rem';
+                sellTab.className = 'btn-secondary';
+                sellTab.style.padding = '0.75rem';
+                suffix.textContent = 'ETH';
+                button.textContent = 'Buy';
+            } else {
+                sellTab.className = 'btn-primary';
+                sellTab.style.padding = '0.75rem';
+                buyTab.className = 'btn-secondary';
+                buyTab.style.padding = '0.75rem';
+                suffix.textContent = currentTokenDetails.info.symbol;
+                button.textContent = 'Sell';
+            }
+            
+            updateTradePreview();
+        }
+
+        function updateTradePreview() {
+            const amount = parseFloat(document.getElementById('tradeAmount').value) || 0;
+            const receiveElement = document.getElementById('receiveAmount');
+            const feeElement = document.getElementById('platformFee');
+            
+            if (amount <= 0 || !currentTokenDetails) {
+                receiveElement.textContent = '0 ' + (tradeMode === 'buy' ? 'TOKENS' : 'ETH');
+                feeElement.textContent = '0 ETH';
+                return;
+            }
+            
+            const fee = amount * 0.01; // 1% fee
+            
+            if (tradeMode === 'buy') {
+                // Simple calculation for preview
+                const tokensOut = (amount - fee) / parseFloat(ethers.utils.formatEther(currentTokenDetails.price));
+                receiveElement.textContent = tokensOut.toFixed(2) + ' ' + currentTokenDetails.info.symbol;
+                feeElement.textContent = fee.toFixed(6) + ' ETH';
+            } else {
+                const ethOut = amount * parseFloat(ethers.utils.formatEther(currentTokenDetails.price));
+                const ethAfterFee = ethOut * 0.99;
+                receiveElement.textContent = ethAfterFee.toFixed(6) + ' ETH';
+                feeElement.textContent = (ethOut * 0.01).toFixed(6) + ' ETH';
+            }
+        }
+
+        async function handleTrade(e) {
+            e.preventDefault();
+            
+            if (!signer) {
+                showToast('Please connect your wallet first', 'error');
+                return;
+            }
+            
+            const button = e.target.querySelector('button[type="submit"]');
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Processing...';
+            
+            try {
+                const amount = parseFloat(document.getElementById('tradeAmount').value);
+                
+                if (tradeMode === 'buy') {
+                    const value = ethers.utils.parseEther(amount.toString());
+                    const tx = await factory.buyToken(currentToken, 0, { value }); // 0 for minTokensOut
+                    showToast('Buying tokens... Please wait', 'success');
+                    await tx.wait();
+                    showToast('Purchase successful!', 'success');
+                } else {
+                    // For selling, need to approve first
+                    const tokenContract = new ethers.Contract(currentToken, ERC20_ABI, signer);
+                    const tokenAmount = ethers.utils.parseEther(amount.toString());
+                    
+                    // Check allowance
+                    const allowance = await tokenContract.allowance(userAddress, FACTORY_ADDRESS);
+                    if (allowance.lt(tokenAmount)) {
+                        showToast('Approving tokens...', 'success');
+                        const approveTx = await tokenContract.approve(FACTORY_ADDRESS, tokenAmount);
+                        await approveTx.wait();
+                    }
+                    
+                    const tx = await factory.sellToken(currentToken, tokenAmount, 0); // 0 for minEthOut
+                    showToast('Selling tokens... Please wait', 'success');
+                    await tx.wait();
+                    showToast('Sale successful!', 'success');
+                }
+                
+                // Reset and reload
+                document.getElementById('tradeAmount').value = '';
+                updateTradePreview();
+                
+                // Reload token details
+                await loadKnownTokens([
+                    "0x14610B22f3DBF799e7F28006E1a517d4e7bc619a",
+                    "0xE5e873f0B59A70757E9474BD8F4449fC158D58Fc"
+                ]);
+                
+            } catch (error) {
+                console.error('Trade error:', error);
+                showToast(error.reason || 'Transaction failed', 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        }
     </script>
 </body>
 </html>
