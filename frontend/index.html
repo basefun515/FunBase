@@ -800,6 +800,42 @@
         let currentTokenDetails = null;
         let tradeMode = 'buy';
 
+        // Define all functions first
+        
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Toast function
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            
+            toast.className = 'toast ' + type;
+            icon.textContent = type === 'success' ? '✓' : '✕';
+            msg.textContent = message;
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Format number helper
+        function formatNumber(num) {
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return num.toFixed(2);
+        }
+
         // Initialize app
         async function init() {
             console.log("Initializing app...");
@@ -813,16 +849,44 @@
             document.getElementById('connectWallet').addEventListener('click', connectWallet);
             document.getElementById('createTokenBtn').addEventListener('click', () => openModal('createModal'));
             document.getElementById('createTokenForm').addEventListener('submit', handleCreateToken);
-            document.getElementById('tradeForm').addEventListener('submit', handleTrade);
-            document.getElementById('tradeAmount').addEventListener('input', updateTradePreview);
+            
+            // Only add trade form listener if it exists
+            const tradeForm = document.getElementById('tradeForm');
+            if (tradeForm) {
+                tradeForm.addEventListener('submit', handleTrade);
+            }
+            
+            const tradeAmountInput = document.getElementById('tradeAmount');
+            if (tradeAmountInput) {
+                tradeAmountInput.addEventListener('input', updateTradePreview);
+            }
 
             // Load initial data
             try {
+                // Try primary RPC first
                 provider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org');
+                
+                // Test the connection
+                await provider.getBlockNumber();
+                console.log("Connected to Base Sepolia RPC");
+                
                 await loadStats();
                 await loadTokens();
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Primary RPC error, trying backup:', error);
+                
+                // Try backup RPC
+                try {
+                    provider = new ethers.providers.JsonRpcProvider('https://base-sepolia.g.alchemy.com/v2/demo');
+                    await provider.getBlockNumber();
+                    console.log("Connected to backup RPC");
+                    
+                    await loadStats();
+                    await loadTokens();
+                } catch (backupError) {
+                    console.error('Both RPCs failed:', backupError);
+                    showToast('Network connection issues. Please refresh the page.', 'error');
+                }
             }
         }
 
