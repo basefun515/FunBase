@@ -716,6 +716,7 @@
             "function tokenCreationFee() view returns (uint256)",
             "function totalTokensCreated() view returns (uint256)",
             "function totalGraduatedTokens() view returns (uint256)",
+            "function getTokenDetails(address token) view returns (tuple(string name, string symbol, string description, string imageUrl, string twitter, string telegram, string website, address creator, uint256 createdAt, uint256 marketCap, bool isGraduated) info, tuple(uint256 ethReserve, uint256 tokenReserve, uint256 k, uint256 totalRaised, uint256 graduationTarget) curve, tuple(uint256 totalVolume, uint256 buyCount, uint256 sellCount, uint256 uniqueTraders, uint256 highestPrice, uint256 lastPrice) stats, uint256 price)",
             "event TokenCreated(address indexed token, address indexed creator, string name, string symbol, uint256 timestamp)"
         ];
 
@@ -740,6 +741,7 @@
             try {
                 provider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org');
                 await loadStats();
+                await loadTokens();
             } catch (error) {
                 console.error('Error:', error);
             }
@@ -821,6 +823,7 @@
                 closeModal('createModal');
                 e.target.reset();
                 await loadStats();
+                await loadTokens();
                 
             } catch (error) {
                 console.error('Error:', error);
@@ -829,6 +832,99 @@
                 button.disabled = false;
                 button.textContent = 'Create Token (0.002 ETH)';
             }
+        }
+
+        // Load tokens
+        async function loadTokens() {
+            try {
+                console.log("Loading tokens...");
+                const tokensGrid = document.getElementById('tokensGrid');
+                tokensGrid.innerHTML = '<div class="loading"></div>';
+
+                const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
+                
+                // Get current block
+                const currentBlock = await provider.getBlockNumber();
+                const fromBlock = Math.max(0, currentBlock - 5000); // Last 5k blocks
+                
+                // Get TokenCreated events
+                const filter = tempFactory.filters.TokenCreated();
+                const events = await tempFactory.queryFilter(filter, fromBlock, currentBlock);
+                
+                console.log("Found tokens:", events.length);
+                
+                if (events.length === 0) {
+                    tokensGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No tokens created yet. Be the first!</p>';
+                    return;
+                }
+
+                tokensGrid.innerHTML = '';
+                
+                // Display tokens (newest first, max 10)
+                for (let i = events.length - 1; i >= 0 && i >= events.length - 10; i--) {
+                    const event = events[i];
+                    const tokenAddress = event.args.token;
+                    
+                    try {
+                        const details = await tempFactory.getTokenDetails(tokenAddress);
+                        const tokenCard = createTokenCard(tokenAddress, details);
+                        tokensGrid.appendChild(tokenCard);
+                    } catch (error) {
+                        console.error('Error loading token:', error);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading tokens:', error);
+                document.getElementById('tokensGrid').innerHTML = 
+                    '<p style="text-align: center; color: var(--text-secondary);">Unable to load tokens</p>';
+            }
+        }
+
+        // Create token card
+        function createTokenCard(address, details) {
+            const card = document.createElement('div');
+            card.className = 'token-card';
+            
+            const info = details.info;
+            const price = ethers.utils.formatEther(details.price);
+            
+            card.innerHTML = `
+                <div class="token-header">
+                    <div class="token-image">${info.symbol.charAt(0)}</div>
+                    <div class="token-info">
+                        <div class="token-name">${info.name}</div>
+                        <div class="token-symbol">${info.symbol}</div>
+                    </div>
+                </div>
+                <div class="token-stats">
+                    <div class="token-stat">
+                        <div class="token-stat-label">Price</div>
+                        <div class="token-stat-value">${parseFloat(price).toFixed(8)} ETH</div>
+                    </div>
+                    <div class="token-stat">
+                        <div class="token-stat-label">Market Cap</div>
+                        <div class="token-stat-value">${formatNumber(parseFloat(ethers.utils.formatEther(info.marketCap)))}</div>
+                    </div>
+                    <div class="token-stat">
+                        <div class="token-stat-label">Creator</div>
+                        <div class="token-stat-value">${info.creator.slice(0, 6)}...${info.creator.slice(-4)}</div>
+                    </div>
+                    <div class="token-stat">
+                        <div class="token-stat-label">Status</div>
+                        <div class="token-stat-value ${info.isGraduated ? 'green' : ''}">${info.isGraduated ? 'Graduated' : 'Active'}</div>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Format number helper
+        function formatNumber(num) {
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return num.toFixed(2);
         }
 
         // Modal functions
