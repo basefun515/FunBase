@@ -702,6 +702,72 @@
         </div>
     </div>
 
+    <!-- Token Detail Modal -->
+    <div class="modal" id="tokenModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTokenName">Token Name</h2>
+                <button class="close-btn" onclick="closeModal('tokenModal')">&times;</button>
+            </div>
+            
+            <!-- Token Info -->
+            <div style="margin-bottom: 2rem; padding: 1rem; background: var(--dark); border-radius: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Symbol</div>
+                        <div id="modalTokenSymbol" style="font-weight: 600;"></div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Price</div>
+                        <div id="modalTokenPrice" style="font-weight: 600;"></div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Market Cap</div>
+                        <div id="modalTokenMarketCap" style="font-weight: 600;"></div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Liquidity</div>
+                        <div id="modalTokenLiquidity" style="font-weight: 600;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trade Panel -->
+            <div class="trade-panel">
+                <div class="trade-tabs">
+                    <button class="trade-tab active" onclick="setTradeMode('buy', event)">Buy</button>
+                    <button class="trade-tab" onclick="setTradeMode('sell', event)">Sell</button>
+                </div>
+                
+                <form id="tradeForm">
+                    <div class="input-group">
+                        <input type="number" class="form-input" id="tradeAmount" placeholder="0.0" step="0.001" min="0.001" required>
+                        <span class="input-suffix" id="tradeSuffix">ETH</span>
+                    </div>
+                    
+                    <div class="price-info">
+                        <div class="price-row">
+                            <span class="price-label">You'll receive</span>
+                            <span class="price-value" id="receiveAmount">0 TOKENS</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">Price Impact</span>
+                            <span class="price-value" id="priceImpact">0%</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">Platform fee (1%)</span>
+                            <span class="price-value" id="platformFee">0 ETH</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;" id="tradeButton">
+                        Buy
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <div class="toast-icon" id="toastIcon"></div>
@@ -713,6 +779,8 @@
         const FACTORY_ADDRESS = '0x7730469828858529df36A22efB08520C73362244';
         const FACTORY_ABI = [
             "function createToken(string name, string symbol, string description, string imageUrl, string twitter, string telegram, string website) payable returns (address)",
+            "function buyToken(address token, uint256 minTokensOut) payable returns (uint256)",
+            "function sellToken(address token, uint256 tokensIn, uint256 minEthOut) returns (uint256)",
             "function tokenCreationFee() view returns (uint256)",
             "function totalTokensCreated() view returns (uint256)",
             "function totalGraduatedTokens() view returns (uint256)",
@@ -720,8 +788,17 @@
             "event TokenCreated(address indexed token, address indexed creator, string name, string symbol, uint256 timestamp)"
         ];
 
+        const ERC20_ABI = [
+            "function approve(address spender, uint256 amount) returns (bool)",
+            "function balanceOf(address account) view returns (uint256)",
+            "function symbol() view returns (string)"
+        ];
+
         // Global variables
         let provider, signer, factory, userAddress;
+        let currentToken = null;
+        let currentTokenDetails = null;
+        let tradeMode = 'buy';
 
         // Initialize app
         async function init() {
@@ -736,6 +813,8 @@
             document.getElementById('connectWallet').addEventListener('click', connectWallet);
             document.getElementById('createTokenBtn').addEventListener('click', () => openModal('createModal'));
             document.getElementById('createTokenForm').addEventListener('submit', handleCreateToken);
+            document.getElementById('tradeForm').addEventListener('submit', handleTrade);
+            document.getElementById('tradeAmount').addEventListener('input', updateTradePreview);
 
             // Load initial data
             try {
