@@ -833,13 +833,32 @@
             }
         }
 
-        // Load tokens from blockchain
+        // Configuration - Backend API is optional
+        const API_URL = ''; // Leave empty to use blockchain directly
+        
+        // Load tokens from blockchain or API
         async function loadTokens() {
             try {
                 console.log("Loading tokens...");
                 const tokensGrid = document.getElementById('tokensGrid');
                 tokensGrid.innerHTML = '<div class="loading"></div>';
 
+                // Try API first if available
+                if (API_URL) {
+                    try {
+                        const response = await fetch(`${API_URL}/api/tokens`);
+                        const data = await response.json();
+                        
+                        if (data.tokens && data.tokens.length > 0) {
+                            displayTokensFromAPI(data.tokens);
+                            return;
+                        }
+                    } catch (error) {
+                        console.log('API not available, falling back to blockchain');
+                    }
+                }
+
+                // Fallback to blockchain
                 if (!provider) {
                     provider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org');
                 }
@@ -882,6 +901,48 @@
                 document.getElementById('tokensGrid').innerHTML = 
                     '<p style="text-align: center; color: var(--text-secondary);">Failed to load tokens. Please refresh the page.</p>';
             }
+        }
+
+        // Display tokens from API response
+        function displayTokensFromAPI(tokens) {
+            const tokensGrid = document.getElementById('tokensGrid');
+            tokensGrid.innerHTML = '';
+            
+            tokens.forEach(token => {
+                const card = document.createElement('div');
+                card.className = 'token-card';
+                card.onclick = () => loadTokenDetailsFromAPI(token.address);
+                
+                card.innerHTML = `
+                    <div class="token-header">
+                        <div class="token-image">${token.symbol.charAt(0)}</div>
+                        <div class="token-info">
+                            <div class="token-name">${token.name}</div>
+                            <div class="token-symbol">${token.symbol}</div>
+                        </div>
+                    </div>
+                    <div class="token-stats">
+                        <div class="token-stat">
+                            <div class="token-stat-label">Price</div>
+                            <div class="token-stat-value">${parseFloat(ethers.utils.formatEther(token.price)).toFixed(8)} ETH</div>
+                        </div>
+                        <div class="token-stat">
+                            <div class="token-stat-label">Market Cap</div>
+                            <div class="token-stat-value">${formatNumber(parseFloat(ethers.utils.formatEther(token.marketCap)))}</div>
+                        </div>
+                        <div class="token-stat">
+                            <div class="token-stat-label">Volume</div>
+                            <div class="token-stat-value">${formatNumber(parseFloat(ethers.utils.formatEther(token.volume)))}</div>
+                        </div>
+                        <div class="token-stat">
+                            <div class="token-stat-label">Status</div>
+                            <div class="token-stat-value ${token.isGraduated ? 'green' : ''}">${token.isGraduated ? 'Graduated' : 'Active'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                tokensGrid.appendChild(card);
+            });
         }
 
         // Create token card from blockchain data
