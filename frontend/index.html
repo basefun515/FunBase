@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PumpFun Base - Create & Trade Memecoins</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -495,82 +494,6 @@
             color: white;
         }
 
-        .trade-panel {
-            background: var(--light);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--border);
-        }
-
-        .trade-tabs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .trade-tab {
-            padding: 0.75rem;
-            background: var(--dark);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        .trade-tab.active {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 1rem;
-        }
-
-        .input-group input {
-            padding-right: 4rem;
-        }
-
-        .input-suffix {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .price-info {
-            background: var(--dark);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .price-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .price-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .price-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .price-value {
-            font-weight: 500;
-        }
-
         @media (max-width: 768px) {
             .container {
                 padding: 0 1rem;
@@ -702,72 +625,6 @@
         </div>
     </div>
 
-    <!-- Token Detail Modal -->
-    <div class="modal" id="tokenModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalTokenName">Token Name</h2>
-                <button class="close-btn" onclick="closeModal('tokenModal')">&times;</button>
-            </div>
-            
-            <!-- Token Info -->
-            <div style="margin-bottom: 2rem; padding: 1rem; background: var(--dark); border-radius: 12px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Symbol</div>
-                        <div id="modalTokenSymbol" style="font-weight: 600;"></div>
-                    </div>
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Price</div>
-                        <div id="modalTokenPrice" style="font-weight: 600;"></div>
-                    </div>
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Market Cap</div>
-                        <div id="modalTokenMarketCap" style="font-weight: 600;"></div>
-                    </div>
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Liquidity</div>
-                        <div id="modalTokenLiquidity" style="font-weight: 600;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Trade Panel -->
-            <div class="trade-panel">
-                <div class="trade-tabs">
-                    <button class="trade-tab active" onclick="setTradeMode('buy', event)">Buy</button>
-                    <button class="trade-tab" onclick="setTradeMode('sell', event)">Sell</button>
-                </div>
-                
-                <form id="tradeForm">
-                    <div class="input-group">
-                        <input type="number" class="form-input" id="tradeAmount" placeholder="0.0" step="0.001" min="0.001" required>
-                        <span class="input-suffix" id="tradeSuffix">ETH</span>
-                    </div>
-                    
-                    <div class="price-info">
-                        <div class="price-row">
-                            <span class="price-label">You'll receive</span>
-                            <span class="price-value" id="receiveAmount">0 TOKENS</span>
-                        </div>
-                        <div class="price-row">
-                            <span class="price-label">Price Impact</span>
-                            <span class="price-value" id="priceImpact">0%</span>
-                        </div>
-                        <div class="price-row">
-                            <span class="price-label">Platform fee (1%)</span>
-                            <span class="price-value" id="platformFee">0 ETH</span>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;" id="tradeButton">
-                        Buy
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <div class="toast-icon" id="toastIcon"></div>
@@ -779,8 +636,6 @@
         const FACTORY_ADDRESS = '0x7730469828858529df36A22efB08520C73362244';
         const FACTORY_ABI = [
             "function createToken(string name, string symbol, string description, string imageUrl, string twitter, string telegram, string website) payable returns (address)",
-            "function buyToken(address token, uint256 minTokensOut) payable returns (uint256)",
-            "function sellToken(address token, uint256 tokensIn, uint256 minEthOut) returns (uint256)",
             "function tokenCreationFee() view returns (uint256)",
             "function totalTokensCreated() view returns (uint256)",
             "function totalGraduatedTokens() view returns (uint256)",
@@ -788,21 +643,10 @@
             "event TokenCreated(address indexed token, address indexed creator, string name, string symbol, uint256 timestamp)"
         ];
 
-        const ERC20_ABI = [
-            "function approve(address spender, uint256 amount) returns (bool)",
-            "function balanceOf(address account) view returns (uint256)",
-            "function symbol() view returns (string)"
-        ];
-
         // Global variables
         let provider, signer, factory, userAddress;
-        let currentToken = null;
-        let currentTokenDetails = null;
-        let tradeMode = 'buy';
 
-        // Define all functions first
-        
-        // Modal functions
+        // Helper functions
         function openModal(modalId) {
             document.getElementById(modalId).classList.add('active');
         }
@@ -811,7 +655,6 @@
             document.getElementById(modalId).classList.remove('active');
         }
 
-        // Toast function
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
@@ -828,66 +671,11 @@
             }, 3000);
         }
 
-        // Format number helper
         function formatNumber(num) {
             if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
             if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
             if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
             return num.toFixed(2);
-        }
-
-        // Initialize app
-        async function init() {
-            console.log("Initializing app...");
-            
-            if (typeof window.ethereum === 'undefined') {
-                showToast('Please install MetaMask to use this app', 'error');
-                return;
-            }
-
-            // Event listeners
-            document.getElementById('connectWallet').addEventListener('click', connectWallet);
-            document.getElementById('createTokenBtn').addEventListener('click', () => openModal('createModal'));
-            document.getElementById('createTokenForm').addEventListener('submit', handleCreateToken);
-            
-            // Only add trade form listener if it exists
-            const tradeForm = document.getElementById('tradeForm');
-            if (tradeForm) {
-                tradeForm.addEventListener('submit', handleTrade);
-            }
-            
-            const tradeAmountInput = document.getElementById('tradeAmount');
-            if (tradeAmountInput) {
-                tradeAmountInput.addEventListener('input', updateTradePreview);
-            }
-
-            // Load initial data
-            try {
-                // Try primary RPC first
-                provider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org');
-                
-                // Test the connection
-                await provider.getBlockNumber();
-                console.log("Connected to Base Sepolia RPC");
-                
-                await loadStats();
-                await loadTokens();
-            } catch (error) {
-                console.error('Primary RPC error, trying backup:', error);
-                
-                // Try backup RPC
-                try {
-                    provider = new ethers.providers.JsonRpcProvider('https://base-sepolia.g.alchemy.com/v2/demo');
-                    await provider.getBlockNumber();
-                    console.log("Connected to backup RPC");
-                    
-                    await loadStats();
-                    await loadTokens();
-                } catch (backupError) {
-                    console.error('Both RPCs failed:', backupError);
-                    showToast('Network connection issues. Please refresh the page.', 'error');
-                }
-            }
         }
 
         // Connect wallet
@@ -920,15 +708,113 @@
         // Load stats
         async function loadStats() {
             try {
+                console.log("Loading stats...");
                 const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
                 const totalTokens = await tempFactory.totalTokensCreated();
                 const graduatedTokens = await tempFactory.totalGraduatedTokens();
                 
                 document.getElementById('totalTokens').textContent = totalTokens.toString();
                 document.getElementById('graduatedTokens').textContent = graduatedTokens.toString();
+                
+                // Mock data for volume and users
+                document.getElementById('totalVolume').textContent = '$0';
+                document.getElementById('totalUsers').textContent = '0';
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
+        }
+
+        // Load tokens
+        async function loadTokens() {
+            try {
+                console.log("Loading tokens...");
+                const tokensGrid = document.getElementById('tokensGrid');
+                tokensGrid.innerHTML = '<div class="loading"></div>';
+
+                const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
+                
+                // Get current block
+                const currentBlock = await provider.getBlockNumber();
+                // Start from a specific block where we know tokens exist
+                const fromBlock = 28677012 - 10000; // Going back from the block we saw in console
+                
+                console.log(`Searching from block ${fromBlock} to ${currentBlock}`);
+                
+                // Get TokenCreated events
+                const filter = tempFactory.filters.TokenCreated();
+                const events = await tempFactory.queryFilter(filter, fromBlock, currentBlock);
+                
+                console.log("Found tokens:", events.length);
+                
+                if (events.length === 0) {
+                    tokensGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No tokens found. Try creating one!</p>';
+                    return;
+                }
+
+                tokensGrid.innerHTML = '';
+                
+                // Display tokens (newest first, max 10)
+                for (let i = events.length - 1; i >= 0 && i >= events.length - 10; i--) {
+                    const event = events[i];
+                    const tokenAddress = event.args.token;
+                    
+                    try {
+                        const details = await tempFactory.getTokenDetails(tokenAddress);
+                        const tokenCard = createTokenCard(tokenAddress, details);
+                        tokensGrid.appendChild(tokenCard);
+                    } catch (error) {
+                        console.error('Error loading token:', error);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading tokens:', error);
+                document.getElementById('tokensGrid').innerHTML = 
+                    '<p style="text-align: center; color: var(--text-secondary);">Unable to load tokens. Please refresh.</p>';
+            }
+        }
+
+        // Create token card
+        function createTokenCard(address, details) {
+            const card = document.createElement('div');
+            card.className = 'token-card';
+            
+            const info = details.info;
+            const price = ethers.utils.formatEther(details.price);
+            
+            card.innerHTML = `
+                <div class="token-header">
+                    <div class="token-image">${info.symbol.charAt(0)}</div>
+                    <div class="token-info">
+                        <div class="token-name">${info.name}</div>
+                        <div class="token-symbol">${info.symbol}</div>
+                    </div>
+                </div>
+                <div class="token-stats">
+                    <div class="token-stat">
+                        <div class="token-stat-label">Price</div>
+                        <div class="token-stat-value">${parseFloat(price).toFixed(8)} ETH</div>
+                    </div>
+                    <div class="token-stat">
+                        <div class="token-stat-label">Market Cap</div>
+                        <div class="token-stat-value">$${formatNumber(parseFloat(ethers.utils.formatEther(info.marketCap)))}</div>
+                    </div>
+                    <div class="token-stat">
+                        <div class="token-stat-label">Creator</div>
+                        <div class="token-stat-value">${info.creator.slice(0, 6)}...${info.creator.slice(-4)}</div>
+                    </div>
+                    <div class="token-stat">
+                        <div class="token-stat-label">Status</div>
+                        <div class="token-stat-value ${info.isGraduated ? 'green' : ''}">${info.isGraduated ? 'Graduated' : 'Active'}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Add click handler
+            card.addEventListener('click', () => {
+                showToast(`Token: ${info.name} (${address.slice(0, 6)}...${address.slice(-4)})`, 'success');
+            });
+            
+            return card;
         }
 
         // Create token
@@ -977,168 +863,32 @@
             }
         }
 
-        // Load tokens
-        async function loadTokens() {
-            try {
-                console.log("Loading tokens...");
-                const tokensGrid = document.getElementById('tokensGrid');
-                tokensGrid.innerHTML = '<div class="loading"></div>';
-
-                const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
-                
-                // Get current block
-                const currentBlock = await provider.getBlockNumber();
-                const fromBlock = Math.max(0, currentBlock - 50000); // Increased to 50k blocks to catch older tokens
-                
-                console.log(`Searching from block ${fromBlock} to ${currentBlock}`);
-                
-                // Get TokenCreated events
-                const filter = tempFactory.filters.TokenCreated();
-                const events = await tempFactory.queryFilter(filter, fromBlock, currentBlock);
-                
-                console.log("Found tokens:", events.length);
-                
-                if (events.length === 0) {
-                    tokensGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No tokens found. Try creating one!</p>';
-                    return;
-                }
-
-                tokensGrid.innerHTML = '';
-                
-                // Display tokens (newest first, max 10)
-                for (let i = events.length - 1; i >= 0 && i >= events.length - 10; i--) {
-                    const event = events[i];
-                    const tokenAddress = event.args.token;
-                    
-                    try {
-                        const details = await tempFactory.getTokenDetails(tokenAddress);
-                        const tokenCard = createTokenCard(tokenAddress, details);
-                        tokensGrid.appendChild(tokenCard);
-                    } catch (error) {
-                        console.error('Error loading token:', error);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading tokens:', error);
-                // If the range is too large, try a smaller range
-                if (error.message && error.message.includes('query returned more than')) {
-                    console.log("Too many results, trying smaller range...");
-                    await loadTokensWithSmallerRange();
-                } else {
-                    document.getElementById('tokensGrid').innerHTML = 
-                        '<p style="text-align: center; color: var(--text-secondary);">Unable to load tokens</p>';
-                }
+        // Initialize app
+        async function init() {
+            console.log("Initializing app...");
+            
+            if (typeof window.ethereum === 'undefined') {
+                showToast('Please install MetaMask to use this app', 'error');
+                return;
             }
-        }
 
-        // Fallback for smaller range
-        async function loadTokensWithSmallerRange() {
+            // Event listeners
+            document.getElementById('connectWallet').addEventListener('click', connectWallet);
+            document.getElementById('createTokenBtn').addEventListener('click', () => openModal('createModal'));
+            document.getElementById('createTokenForm').addEventListener('submit', handleCreateToken);
+
+            // Load initial data
             try {
-                const tokensGrid = document.getElementById('tokensGrid');
-                const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
-                const currentBlock = await provider.getBlockNumber();
-                const fromBlock = Math.max(0, currentBlock - 10000); // Fallback to 10k blocks
+                // Use the public RPC endpoint
+                provider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org');
+                console.log("Connected to Base Sepolia RPC");
                 
-                const filter = tempFactory.filters.TokenCreated();
-                const events = await tempFactory.queryFilter(filter, fromBlock, currentBlock);
-                
-                if (events.length === 0) {
-                    tokensGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No recent tokens found</p>';
-                    return;
-                }
-
-                tokensGrid.innerHTML = '';
-                
-                for (let i = events.length - 1; i >= 0 && i >= events.length - 10; i--) {
-                    const event = events[i];
-                    const tokenAddress = event.args.token;
-                    
-                    try {
-                        const details = await tempFactory.getTokenDetails(tokenAddress);
-                        const tokenCard = createTokenCard(tokenAddress, details);
-                        tokensGrid.appendChild(tokenCard);
-                    } catch (error) {
-                        console.error('Error loading token:', error);
-                    }
-                }
+                await loadStats();
+                await loadTokens();
             } catch (error) {
-                console.error('Fallback also failed:', error);
-                document.getElementById('tokensGrid').innerHTML = 
-                    '<p style="text-align: center; color: var(--text-secondary);">Unable to load tokens</p>';
+                console.error('Error initializing:', error);
+                showToast('Network connection issues. Please refresh.', 'error');
             }
-        }
-
-        // Create token card
-        function createTokenCard(address, details) {
-            const card = document.createElement('div');
-            card.className = 'token-card';
-            
-            const info = details.info;
-            const price = ethers.utils.formatEther(details.price);
-            
-            card.innerHTML = `
-                <div class="token-header">
-                    <div class="token-image">${info.symbol.charAt(0)}</div>
-                    <div class="token-info">
-                        <div class="token-name">${info.name}</div>
-                        <div class="token-symbol">${info.symbol}</div>
-                    </div>
-                </div>
-                <div class="token-stats">
-                    <div class="token-stat">
-                        <div class="token-stat-label">Price</div>
-                        <div class="token-stat-value">${parseFloat(price).toFixed(8)} ETH</div>
-                    </div>
-                    <div class="token-stat">
-                        <div class="token-stat-label">Market Cap</div>
-                        <div class="token-stat-value">${formatNumber(parseFloat(ethers.utils.formatEther(info.marketCap)))}</div>
-                    </div>
-                    <div class="token-stat">
-                        <div class="token-stat-label">Creator</div>
-                        <div class="token-stat-value">${info.creator.slice(0, 6)}...${info.creator.slice(-4)}</div>
-                    </div>
-                    <div class="token-stat">
-                        <div class="token-stat-label">Status</div>
-                        <div class="token-stat-value ${info.isGraduated ? 'green' : ''}">${info.isGraduated ? 'Graduated' : 'Active'}</div>
-                    </div>
-                </div>
-            `;
-            
-            return card;
-        }
-
-        // Format number helper
-        function formatNumber(num) {
-            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-            return num.toFixed(2);
-        }
-
-        // Modal functions
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        // Toast function
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toastIcon');
-            const msg = document.getElementById('toastMessage');
-            
-            toast.className = 'toast ' + type;
-            icon.textContent = type === 'success' ? '✓' : '✕';
-            msg.textContent = message;
-            
-            toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
         }
 
         // Initialize on load
