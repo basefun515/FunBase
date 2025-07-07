@@ -34,7 +34,6 @@
             overflow-x: hidden;
         }
 
-        /* Animations */
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -46,28 +45,6 @@
             }
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-        }
-
-        @keyframes gradient {
-            0% {
-                background-position: 0% 50%;
-            }
-            50% {
-                background-position: 100% 50%;
-            }
-            100% {
-                background-position: 0% 50%;
-            }
-        }
-
-        /* Header */
         .header {
             background: rgba(26, 31, 46, 0.95);
             backdrop-filter: blur(10px);
@@ -96,8 +73,6 @@
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: gradient 3s ease infinite;
-            background-size: 200% 200%;
         }
 
         .nav-links {
@@ -126,8 +101,6 @@
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
         }
 
         .wallet-btn:hover {
@@ -135,7 +108,6 @@
             box-shadow: 0 5px 15px rgba(0, 82, 255, 0.4);
         }
 
-        /* Hero Section */
         .hero {
             padding: 4rem 0;
             text-align: center;
@@ -201,7 +173,6 @@
             color: var(--primary);
         }
 
-        /* Stats Section */
         .stats {
             padding: 2rem 0;
             background: var(--light);
@@ -241,7 +212,6 @@
             font-size: 0.9rem;
         }
 
-        /* Token Grid */
         .tokens-section {
             padding: 3rem 0;
         }
@@ -299,26 +269,10 @@
             overflow: hidden;
         }
 
-        .token-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            transform: scaleX(0);
-            transition: transform 0.3s;
-        }
-
         .token-card:hover {
             transform: translateY(-5px);
             border-color: var(--primary);
             box-shadow: 0 10px 30px rgba(0, 82, 255, 0.2);
-        }
-
-        .token-card:hover::before {
-            transform: scaleX(1);
         }
 
         .token-header {
@@ -382,11 +336,6 @@
             color: var(--success);
         }
 
-        .token-stat-value.red {
-            color: var(--danger);
-        }
-
-        /* Modal */
         .modal {
             position: fixed;
             top: 0;
@@ -451,7 +400,6 @@
             color: var(--text);
         }
 
-        /* Forms */
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -485,7 +433,6 @@
             resize: vertical;
         }
 
-        /* Loading */
         .loading {
             display: inline-block;
             width: 20px;
@@ -500,7 +447,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 2rem;
@@ -549,7 +495,82 @@
             color: white;
         }
 
-        /* Responsive */
+        .trade-panel {
+            background: var(--light);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .trade-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .trade-tab {
+            padding: 0.75rem;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .trade-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .input-group input {
+            padding-right: 4rem;
+        }
+
+        .input-suffix {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .price-info {
+            background: var(--dark);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .price-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .price-value {
+            font-weight: 500;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 0 1rem;
@@ -578,7 +599,6 @@
                 <div class="nav-links">
                     <a href="#tokens" class="nav-link">Explore</a>
                     <a href="#" class="nav-link" onclick="openModal('createModal'); return false;">Create</a>
-                    <a href="#" class="nav-link" onclick="showPortfolio(); return false;">Portfolio</a>
                     <button class="wallet-btn" id="connectWallet">Connect Wallet</button>
                 </div>
             </nav>
@@ -689,14 +709,10 @@
     </div>
 
     <script>
-        // YOUR DEPLOYED CONTRACT ADDRESS
-        const FACTORY_ADDRESS = '0x7730469828858529df36A22efB08520C73362244'; // Your deployed factory on Base Sepolia
-        
+        // Contract configuration
+        const FACTORY_ADDRESS = '0x7730469828858529df36A22efB08520C73362244';
         const FACTORY_ABI = [
             "function createToken(string name, string symbol, string description, string imageUrl, string twitter, string telegram, string website) payable returns (address)",
-            "function buyToken(address token, uint256 minTokensOut) payable returns (uint256)",
-            "function sellToken(address token, uint256 tokensIn, uint256 minEthOut) returns (uint256)",
-            "function getTokenDetails(address token) view returns (tuple(string name, string symbol, string description, string imageUrl, string twitter, string telegram, string website, address creator, uint256 createdAt, uint256 marketCap, bool isGraduated) info, tuple(uint256 ethReserve, uint256 tokenReserve, uint256 k, uint256 totalRaised, uint256 graduationTarget) curve, tuple(uint256 totalVolume, uint256 buyCount, uint256 sellCount, uint256 uniqueTraders, uint256 highestPrice, uint256 lastPrice) stats, uint256 price)",
             "function tokenCreationFee() view returns (uint256)",
             "function totalTokensCreated() view returns (uint256)",
             "function totalGraduatedTokens() view returns (uint256)",
@@ -705,46 +721,27 @@
 
         // Global variables
         let provider, signer, factory, userAddress;
-        let currentToken = null;
-        let currentTokenDetails = null;
-        let tradeMode = 'buy';
-
-        const ERC20_ABI = [
-            "function approve(address spender, uint256 amount) returns (bool)",
-            "function balanceOf(address account) view returns (uint256)",
-            "function symbol() view returns (string)",
-            "function decimals() view returns (uint8)"
-        ];
 
         // Initialize app
         async function init() {
             console.log("Initializing app...");
             
-            // Check if MetaMask is installed
             if (typeof window.ethereum === 'undefined') {
                 showToast('Please install MetaMask to use this app', 'error');
                 return;
             }
 
-            // Set up event listeners
+            // Event listeners
             document.getElementById('connectWallet').addEventListener('click', connectWallet);
             document.getElementById('createTokenBtn').addEventListener('click', () => openModal('createModal'));
             document.getElementById('createTokenForm').addEventListener('submit', handleCreateToken);
 
-            // Filter tabs
-            document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-                    e.target.classList.add('active');
-                });
-            });
-
-            // Set up provider for read-only operations
+            // Load initial data
             try {
                 provider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org');
                 await loadStats();
             } catch (error) {
-                console.error('Error setting up provider:', error);
+                console.error('Error:', error);
             }
         }
 
@@ -755,264 +752,41 @@
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 userAddress = accounts[0];
                 
-                // Check network
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                console.log("Current chain ID:", chainId);
-                
-                if (chainId !== '0x14a34') { // Base Sepolia = 84532
+                if (chainId !== '0x14a34') {
                     showToast('Please switch to Base Sepolia network', 'error');
-                    await switchToBaseSepolia();
                     return;
                 }
 
-                // Set up provider and signer
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 signer = provider.getSigner();
                 factory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
 
-                // Update UI
                 document.getElementById('connectWallet').textContent = 
                     userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
                 
                 showToast('Wallet connected!', 'success');
-                console.log("Wallet connected:", userAddress);
             } catch (error) {
-                console.error('Connection error:', error);
+                console.error('Error:', error);
                 showToast('Failed to connect wallet', 'error');
-            }
-        }
-
-        // Switch to Base Sepolia network
-        async function switchToBaseSepolia() {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x14a34' }], // 84532 in hex
-                });
-            } catch (error) {
-                if (error.code === 4902) {
-                    // Add Base Sepolia network
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [{
-                            chainId: '0x14a34',
-                            chainName: 'Base Sepolia',
-                            nativeCurrency: {
-                                name: 'Ethereum',
-                                symbol: 'ETH',
-                                decimals: 18
-                            },
-                            rpcUrls: ['https://sepolia.base.org'],
-                            blockExplorerUrls: ['https://sepolia.basescan.org']
-                        }]
-                    });
-                }
             }
         }
 
         // Load stats
         async function loadStats() {
             try {
-                console.log("Loading stats...");
                 const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
-                
                 const totalTokens = await tempFactory.totalTokensCreated();
                 const graduatedTokens = await tempFactory.totalGraduatedTokens();
                 
                 document.getElementById('totalTokens').textContent = totalTokens.toString();
                 document.getElementById('graduatedTokens').textContent = graduatedTokens.toString();
-                
-                // Mock data for demo
-                document.getElementById('totalVolume').textContent = '$0';
-                document.getElementById('totalUsers').textContent = '0';
-                
-                // Load tokens after stats
-                await loadTokens();
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
         }
 
-        // Configuration - Backend API is optional
-        const API_URL = ''; // Leave empty to use blockchain directly
-        
-        // Load tokens from blockchain or API
-        async function loadTokens() {
-            try {
-                console.log("Loading tokens...");
-                const tokensGrid = document.getElementById('tokensGrid');
-                tokensGrid.innerHTML = '<div class="loading"></div>';
-
-                // Try API first if available
-                if (API_URL) {
-                    try {
-                        const response = await fetch(`${API_URL}/api/tokens`);
-                        const data = await response.json();
-                        
-                        if (data.tokens && data.tokens.length > 0) {
-                            displayTokensFromAPI(data.tokens);
-                            return;
-                        }
-                    } catch (error) {
-                        console.log('API not available, falling back to blockchain');
-                    }
-                }
-
-                // Fallback to blockchain
-                if (!provider) {
-                    provider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org');
-                }
-
-                const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
-                
-                // Get current block
-                const currentBlock = await provider.getBlockNumber();
-                const fromBlock = Math.max(0, currentBlock - 10000); // Last 10k blocks only
-                
-                // Get past TokenCreated events
-                const filter = tempFactory.filters.TokenCreated();
-                const events = await tempFactory.queryFilter(filter, fromBlock, currentBlock);
-                
-                console.log("Found tokens:", events.length);
-                
-                if (events.length === 0) {
-                    tokensGrid.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No tokens created yet. Be the first!</p>';
-                    return;
-                }
-
-                tokensGrid.innerHTML = '';
-                
-                // Display tokens in reverse order (newest first)
-                for (let i = events.length - 1; i >= 0 && i >= events.length - 20; i--) { // Show max 20 tokens
-                    const event = events[i];
-                    const tokenAddress = event.args.token;
-                    
-                    try {
-                        // Get token details
-                        const details = await tempFactory.getTokenDetails(tokenAddress);
-                        const tokenCard = createTokenCard(tokenAddress, details);
-                        tokensGrid.appendChild(tokenCard);
-                    } catch (error) {
-                        console.error('Error loading token details:', error);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading tokens:', error);
-                document.getElementById('tokensGrid').innerHTML = 
-                    '<p style="text-align: center; color: var(--text-secondary);">Failed to load tokens. Please refresh the page.</p>';
-            }
-        }
-
-        // Display tokens from API response
-        function displayTokensFromAPI(tokens) {
-            const tokensGrid = document.getElementById('tokensGrid');
-            tokensGrid.innerHTML = '';
-            
-            tokens.forEach(token => {
-                const card = document.createElement('div');
-                card.className = 'token-card';
-                card.onclick = () => loadTokenDetailsFromAPI(token.address);
-                
-                card.innerHTML = `
-                    <div class="token-header">
-                        <div class="token-image">${token.symbol.charAt(0)}</div>
-                        <div class="token-info">
-                            <div class="token-name">${token.name}</div>
-                            <div class="token-symbol">${token.symbol}</div>
-                        </div>
-                    </div>
-                    <div class="token-stats">
-                        <div class="token-stat">
-                            <div class="token-stat-label">Price</div>
-                            <div class="token-stat-value">${parseFloat(ethers.utils.formatEther(token.price)).toFixed(8)} ETH</div>
-                        </div>
-                        <div class="token-stat">
-                            <div class="token-stat-label">Market Cap</div>
-                            <div class="token-stat-value">${formatNumber(parseFloat(ethers.utils.formatEther(token.marketCap)))}</div>
-                        </div>
-                        <div class="token-stat">
-                            <div class="token-stat-label">Volume</div>
-                            <div class="token-stat-value">${formatNumber(parseFloat(ethers.utils.formatEther(token.volume)))}</div>
-                        </div>
-                        <div class="token-stat">
-                            <div class="token-stat-label">Status</div>
-                            <div class="token-stat-value ${token.isGraduated ? 'green' : ''}">${token.isGraduated ? 'Graduated' : 'Active'}</div>
-                        </div>
-                    </div>
-                `;
-                
-                tokensGrid.appendChild(card);
-            });
-        }
-
-        // Create token card from blockchain data
-        function createTokenCard(address, details) {
-            const card = document.createElement('div');
-            card.className = 'token-card';
-            card.onclick = () => openTokenModal(address, details);
-            
-            const info = details.info;
-            const stats = details.stats;
-            const price = ethers.utils.formatEther(details.price);
-            
-            card.innerHTML = `
-                <div class="token-header">
-                    <div class="token-image">${info.symbol.charAt(0)}</div>
-                    <div class="token-info">
-                        <div class="token-name">${info.name}</div>
-                        <div class="token-symbol">${info.symbol}</div>
-                    </div>
-                </div>
-                <div class="token-stats">
-                    <div class="token-stat">
-                        <div class="token-stat-label">Price</div>
-                        <div class="token-stat-value">${parseFloat(price).toFixed(8)} ETH</div>
-                    </div>
-                    <div class="token-stat">
-                        <div class="token-stat-label">Market Cap</div>
-                        <div class="token-stat-value">${formatNumber(parseFloat(ethers.utils.formatEther(info.marketCap)))}</div>
-                    </div>
-                    <div class="token-stat">
-                        <div class="token-stat-label">Volume</div>
-                        <div class="token-stat-value">${formatNumber(parseFloat(ethers.utils.formatEther(stats.totalVolume)))}</div>
-                    </div>
-                    <div class="token-stat">
-                        <div class="token-stat-label">Status</div>
-                        <div class="token-stat-value ${info.isGraduated ? 'green' : ''}">${info.isGraduated ? 'Graduated' : 'Active'}</div>
-                    </div>
-                </div>
-                ${info.description ? `<p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">${info.description.substring(0, 100)}${info.description.length > 100 ? '...' : ''}</p>` : ''}
-            `;
-            
-            return card;
-        }
-
-        // Open token modal
-        async function openTokenModal(address, details) {
-            currentToken = address;
-            currentTokenDetails = details;
-            
-            // Update modal content
-            document.getElementById('modalTokenName').textContent = details.info.name;
-            document.getElementById('modalTokenSymbol').textContent = details.info.symbol;
-            document.getElementById('modalTokenCreator').textContent = 
-                details.info.creator.slice(0, 6) + '...' + details.info.creator.slice(-4);
-            document.getElementById('modalTokenCreated').textContent = 
-                new Date(details.info.createdAt.toNumber() * 1000).toLocaleDateString();
-            document.getElementById('modalTokenDescription').textContent = 
-                details.info.description || 'No description provided';
-            document.getElementById('modalTokenMarketCap').textContent = 
-                '
-
-        // Format number utility
-        function formatNumber(num) {
-            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-            return num.toFixed(2);
-        }
-
-        // Handle create token
+        // Create token
         async function handleCreateToken(e) {
             e.preventDefault();
             
@@ -1022,9 +796,8 @@
             }
 
             const button = e.target.querySelector('button[type="submit"]');
-            const originalText = button.textContent;
             button.disabled = true;
-            button.innerHTML = '<span class="loading"></span> Creating...';
+            button.textContent = 'Creating...';
 
             try {
                 const name = document.getElementById('tokenName').value;
@@ -1036,51 +809,38 @@
                 const website = document.getElementById('tokenWebsite').value || '';
 
                 const fee = await factory.tokenCreationFee();
-                console.log("Creation fee:", ethers.utils.formatEther(fee));
-                
                 const tx = await factory.createToken(
                     name, symbol, description, imageUrl, twitter, telegram, website,
                     { value: fee }
                 );
                 
                 showToast('Creating token... Please wait', 'success');
-                console.log("Transaction sent:", tx.hash);
-                
-                const receipt = await tx.wait();
-                console.log("Transaction confirmed:", receipt);
-                
-                const event = receipt.events.find(e => e.event === 'TokenCreated');
-                const tokenAddress = event.args.token;
+                await tx.wait();
                 
                 showToast('Token created successfully!', 'success');
                 closeModal('createModal');
-                
-                // Reset form
                 e.target.reset();
-                
-                // Reload stats
                 await loadStats();
                 
             } catch (error) {
-                console.error('Error creating token:', error);
-                showToast(error.reason || error.message || 'Failed to create token', 'error');
+                console.error('Error:', error);
+                showToast('Failed to create token', 'error');
             } finally {
                 button.disabled = false;
-                button.textContent = originalText;
+                button.textContent = 'Create Token (0.002 ETH)';
             }
         }
 
-        // Utility functions
+        // Modal functions
         function openModal(modalId) {
             document.getElementById(modalId).classList.add('active');
-            document.body.style.overflow = 'hidden';
         }
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
-            document.body.style.overflow = '';
         }
 
+        // Toast function
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
@@ -1095,489 +855,6 @@
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
-        }
-
-        // Show portfolio
-        async function showPortfolio() {
-            if (!userAddress) {
-                showToast('Please connect your wallet first', 'error');
-                return;
-            }
-            
-            // In a full implementation, this would show user's token holdings
-            showToast('Portfolio feature coming soon!', 'success');
-        }
-
-        // Listen for account changes
-        if (window.ethereum) {
-            window.ethereum.on('accountsChanged', (accounts) => {
-                if (accounts.length === 0) {
-                    userAddress = null;
-                    signer = null;
-                    document.getElementById('connectWallet').textContent = 'Connect Wallet';
-                } else {
-                    connectWallet();
-                }
-            });
-            
-            window.ethereum.on('chainChanged', () => {
-                window.location.reload();
-            });
-        }
-
-        // Initialize on load
-        window.addEventListener('DOMContentLoaded', init);
-    </script>
-</body>
-</html> + formatNumber(parseFloat(ethers.utils.formatEther(details.info.marketCap)));
-            document.getElementById('modalTokenStatus').textContent = 
-                details.info.isGraduated ? 'Graduated to Uniswap' : 'Active on Bonding Curve';
-            
-            // Update social links
-            const socialsDiv = document.getElementById('modalTokenSocials');
-            socialsDiv.innerHTML = '';
-            if (details.info.twitter) {
-                socialsDiv.innerHTML += `<a href="${details.info.twitter}" target="_blank" class="btn-secondary" style="padding: 0.5rem 1rem;">Twitter</a>`;
-            }
-            if (details.info.telegram) {
-                socialsDiv.innerHTML += `<a href="${details.info.telegram}" target="_blank" class="btn-secondary" style="padding: 0.5rem 1rem;">Telegram</a>`;
-            }
-            if (details.info.website) {
-                socialsDiv.innerHTML += `<a href="${details.info.website}" target="_blank" class="btn-secondary" style="padding: 0.5rem 1rem;">Website</a>`;
-            }
-            
-            // Update trading stats
-            document.getElementById('modalTokenVolume').textContent = 
-                '
-
-        // Format number utility
-        function formatNumber(num) {
-            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-            return num.toFixed(2);
-        }
-
-        // Handle create token
-        async function handleCreateToken(e) {
-            e.preventDefault();
-            
-            if (!signer) {
-                showToast('Please connect your wallet first', 'error');
-                return;
-            }
-
-            const button = e.target.querySelector('button[type="submit"]');
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.innerHTML = '<span class="loading"></span> Creating...';
-
-            try {
-                const name = document.getElementById('tokenName').value;
-                const symbol = document.getElementById('tokenSymbol').value;
-                const description = document.getElementById('tokenDescription').value || '';
-                const imageUrl = document.getElementById('tokenImage').value || '';
-                const twitter = document.getElementById('tokenTwitter').value || '';
-                const telegram = document.getElementById('tokenTelegram').value || '';
-                const website = document.getElementById('tokenWebsite').value || '';
-
-                const fee = await factory.tokenCreationFee();
-                console.log("Creation fee:", ethers.utils.formatEther(fee));
-                
-                const tx = await factory.createToken(
-                    name, symbol, description, imageUrl, twitter, telegram, website,
-                    { value: fee }
-                );
-                
-                showToast('Creating token... Please wait', 'success');
-                console.log("Transaction sent:", tx.hash);
-                
-                const receipt = await tx.wait();
-                console.log("Transaction confirmed:", receipt);
-                
-                const event = receipt.events.find(e => e.event === 'TokenCreated');
-                const tokenAddress = event.args.token;
-                
-                showToast('Token created successfully!', 'success');
-                closeModal('createModal');
-                
-                // Reset form
-                e.target.reset();
-                
-                // Reload stats
-                await loadStats();
-                
-            } catch (error) {
-                console.error('Error creating token:', error);
-                showToast(error.reason || error.message || 'Failed to create token', 'error');
-            } finally {
-                button.disabled = false;
-                button.textContent = originalText;
-            }
-        }
-
-        // Utility functions
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toastIcon');
-            const msg = document.getElementById('toastMessage');
-            
-            toast.className = 'toast ' + type;
-            icon.textContent = type === 'success' ? '✓' : '✕';
-            msg.textContent = message;
-            
-            toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        // Show portfolio
-        async function showPortfolio() {
-            if (!userAddress) {
-                showToast('Please connect your wallet first', 'error');
-                return;
-            }
-            
-            // In a full implementation, this would show user's token holdings
-            showToast('Portfolio feature coming soon!', 'success');
-        }
-
-        // Listen for account changes
-        if (window.ethereum) {
-            window.ethereum.on('accountsChanged', (accounts) => {
-                if (accounts.length === 0) {
-                    userAddress = null;
-                    signer = null;
-                    document.getElementById('connectWallet').textContent = 'Connect Wallet';
-                } else {
-                    connectWallet();
-                }
-            });
-            
-            window.ethereum.on('chainChanged', () => {
-                window.location.reload();
-            });
-        }
-
-        // Initialize on load
-        window.addEventListener('DOMContentLoaded', init);
-    </script>
-</body>
-</html> + formatNumber(parseFloat(ethers.utils.formatEther(details.stats.totalVolume)));
-            document.getElementById('modalTokenTrades').textContent = 
-                details.stats.buyCount.add(details.stats.sellCount).toString();
-            document.getElementById('modalTokenLiquidity').textContent = 
-                parseFloat(ethers.utils.formatEther(details.curve.ethReserve)).toFixed(4) + ' ETH';
-            
-            // Calculate progress to graduation
-            const progress = details.curve.totalRaised.mul(100).div(ethers.utils.parseEther("4")); // 4 ETH target
-            document.getElementById('modalTokenProgress').textContent = 
-                Math.min(100, progress.toNumber()) + '%';
-            
-            // Update price
-            document.getElementById('tokenPrice').textContent = 
-                parseFloat(ethers.utils.formatEther(details.price)).toFixed(8) + ' ETH';
-            
-            // Set up trading
-            document.getElementById('tradeForm').addEventListener('submit', handleTrade);
-            document.getElementById('tradeAmount').addEventListener('input', updateTradePreview);
-            
-            setTradeMode('buy');
-            openModal('tokenModal');
-        }
-
-        // Set trade mode
-        function setTradeMode(mode, event) {
-            tradeMode = mode;
-            document.querySelectorAll('.trade-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            const suffix = document.getElementById('tradeSuffix');
-            const button = document.getElementById('tradeButton');
-            
-            if (mode === 'buy') {
-                suffix.textContent = 'ETH';
-                button.textContent = 'Buy';
-                button.style.background = 'linear-gradient(135deg, var(--primary), var(--secondary))';
-            } else {
-                suffix.textContent = currentTokenDetails.info.symbol;
-                button.textContent = 'Sell';
-                button.style.background = 'linear-gradient(135deg, var(--danger), #FF6B6B)';
-            }
-            
-            updateTradePreview();
-        }
-
-        // Update trade preview
-        async function updateTradePreview() {
-            const amount = parseFloat(document.getElementById('tradeAmount').value) || 0;
-            const receiveElement = document.getElementById('receiveAmount');
-            const feeElement = document.getElementById('platformFee');
-            const impactElement = document.getElementById('priceImpact');
-            
-            if (amount <= 0 || !currentTokenDetails) {
-                receiveElement.textContent = '0 ' + (tradeMode === 'buy' ? currentTokenDetails?.info.symbol || 'TOKENS' : 'ETH');
-                feeElement.textContent = '0 ETH';
-                impactElement.textContent = '0%';
-                return;
-            }
-            
-            try {
-                const curve = currentTokenDetails.curve;
-                const fee = amount * 0.01; // 1% fee
-                
-                if (tradeMode === 'buy') {
-                    // Calculate tokens out using bonding curve formula
-                    const ethIn = ethers.utils.parseEther((amount - fee).toString());
-                    const tokensOut = getTokensOut(ethIn, curve.ethReserve, curve.tokenReserve);
-                    const tokensFormatted = parseFloat(ethers.utils.formatEther(tokensOut));
-                    
-                    receiveElement.textContent = tokensFormatted.toFixed(2) + ' ' + currentTokenDetails.info.symbol;
-                    feeElement.textContent = fee.toFixed(6) + ' ETH';
-                    
-                    // Calculate price impact
-                    const currentPrice = parseFloat(ethers.utils.formatEther(currentTokenDetails.price));
-                    const newPrice = parseFloat(ethers.utils.formatEther(
-                        curve.ethReserve.add(ethIn).mul(ethers.utils.parseEther("1")).div(curve.tokenReserve.sub(tokensOut))
-                    ));
-                    const impact = ((newPrice - currentPrice) / currentPrice * 100).toFixed(2);
-                    impactElement.textContent = impact + '%';
-                } else {
-                    // Calculate ETH out for selling tokens
-                    const tokensIn = ethers.utils.parseEther(amount.toString());
-                    const ethOut = getEthOut(tokensIn, curve.tokenReserve, curve.ethReserve);
-                    const ethFormatted = parseFloat(ethers.utils.formatEther(ethOut));
-                    const ethAfterFee = ethFormatted * 0.99; // 1% fee
-                    
-                    receiveElement.textContent = ethAfterFee.toFixed(6) + ' ETH';
-                    feeElement.textContent = (ethFormatted * 0.01).toFixed(6) + ' ETH';
-                    
-                    // Calculate price impact
-                    const currentPrice = parseFloat(ethers.utils.formatEther(currentTokenDetails.price));
-                    const newPrice = parseFloat(ethers.utils.formatEther(
-                        curve.ethReserve.sub(ethOut).mul(ethers.utils.parseEther("1")).div(curve.tokenReserve.add(tokensIn))
-                    ));
-                    const impact = ((newPrice - currentPrice) / currentPrice * 100).toFixed(2);
-                    impactElement.textContent = impact + '%';
-                }
-            } catch (error) {
-                console.error('Preview calculation error:', error);
-            }
-        }
-
-        // Bonding curve calculations
-        function getTokensOut(ethIn, ethReserve, tokenReserve) {
-            const ethInWithFee = ethIn.mul(997);
-            const numerator = ethInWithFee.mul(tokenReserve);
-            const denominator = ethReserve.mul(1000).add(ethInWithFee);
-            return numerator.div(denominator);
-        }
-
-        function getEthOut(tokensIn, tokenReserve, ethReserve) {
-            const tokensInWithFee = tokensIn.mul(997);
-            const numerator = tokensInWithFee.mul(ethReserve);
-            const denominator = tokenReserve.mul(1000).add(tokensInWithFee);
-            return numerator.div(denominator);
-        }
-
-        // Handle trade
-        async function handleTrade(e) {
-            e.preventDefault();
-            
-            if (!signer) {
-                showToast('Please connect your wallet first', 'error');
-                return;
-            }
-            
-            const button = e.target.querySelector('button[type="submit"]');
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.innerHTML = '<span class="loading"></span> Processing...';
-            
-            try {
-                const amount = parseFloat(document.getElementById('tradeAmount').value);
-                
-                if (tradeMode === 'buy') {
-                    const value = ethers.utils.parseEther(amount.toString());
-                    const minTokensOut = 0; // In production, calculate proper slippage
-                    
-                    const tx = await factory.buyToken(currentToken, minTokensOut, { value });
-                    showToast('Buying tokens... Please wait', 'success');
-                    await tx.wait();
-                    showToast('Purchase successful!', 'success');
-                } else {
-                    // First approve token
-                    const tokenContract = new ethers.Contract(currentToken, ERC20_ABI, signer);
-                    const tokenAmount = ethers.utils.parseEther(amount.toString());
-                    
-                    // Check current allowance
-                    const allowance = await tokenContract.allowance(userAddress, FACTORY_ADDRESS);
-                    if (allowance.lt(tokenAmount)) {
-                        const approval = await tokenContract.approve(FACTORY_ADDRESS, tokenAmount);
-                        showToast('Approving tokens...', 'success');
-                        await approval.wait();
-                    }
-                    
-                    const minEthOut = 0; // In production, calculate proper slippage
-                    const tx = await factory.sellToken(currentToken, tokenAmount, minEthOut);
-                    showToast('Selling tokens... Please wait', 'success');
-                    await tx.wait();
-                    showToast('Sale successful!', 'success');
-                }
-                
-                // Reset form and reload token details
-                e.target.reset();
-                
-                // Reload token details
-                const newDetails = await factory.getTokenDetails(currentToken);
-                currentTokenDetails = newDetails;
-                openTokenModal(currentToken, newDetails);
-                
-                // Reload main page tokens
-                await loadTokens();
-                
-            } catch (error) {
-                console.error('Trade error:', error);
-                showToast(error.reason || error.message || 'Transaction failed', 'error');
-            } finally {
-                button.disabled = false;
-                button.textContent = originalText;
-            }
-        }
-
-        // Format number utility
-        function formatNumber(num) {
-            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-            return num.toFixed(2);
-        }
-
-        // Handle create token
-        async function handleCreateToken(e) {
-            e.preventDefault();
-            
-            if (!signer) {
-                showToast('Please connect your wallet first', 'error');
-                return;
-            }
-
-            const button = e.target.querySelector('button[type="submit"]');
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.innerHTML = '<span class="loading"></span> Creating...';
-
-            try {
-                const name = document.getElementById('tokenName').value;
-                const symbol = document.getElementById('tokenSymbol').value;
-                const description = document.getElementById('tokenDescription').value || '';
-                const imageUrl = document.getElementById('tokenImage').value || '';
-                const twitter = document.getElementById('tokenTwitter').value || '';
-                const telegram = document.getElementById('tokenTelegram').value || '';
-                const website = document.getElementById('tokenWebsite').value || '';
-
-                const fee = await factory.tokenCreationFee();
-                console.log("Creation fee:", ethers.utils.formatEther(fee));
-                
-                const tx = await factory.createToken(
-                    name, symbol, description, imageUrl, twitter, telegram, website,
-                    { value: fee }
-                );
-                
-                showToast('Creating token... Please wait', 'success');
-                console.log("Transaction sent:", tx.hash);
-                
-                const receipt = await tx.wait();
-                console.log("Transaction confirmed:", receipt);
-                
-                const event = receipt.events.find(e => e.event === 'TokenCreated');
-                const tokenAddress = event.args.token;
-                
-                showToast('Token created successfully!', 'success');
-                closeModal('createModal');
-                
-                // Reset form
-                e.target.reset();
-                
-                // Reload stats
-                await loadStats();
-                
-            } catch (error) {
-                console.error('Error creating token:', error);
-                showToast(error.reason || error.message || 'Failed to create token', 'error');
-            } finally {
-                button.disabled = false;
-                button.textContent = originalText;
-            }
-        }
-
-        // Utility functions
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toastIcon');
-            const msg = document.getElementById('toastMessage');
-            
-            toast.className = 'toast ' + type;
-            icon.textContent = type === 'success' ? '✓' : '✕';
-            msg.textContent = message;
-            
-            toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        // Show portfolio
-        async function showPortfolio() {
-            if (!userAddress) {
-                showToast('Please connect your wallet first', 'error');
-                return;
-            }
-            
-            // In a full implementation, this would show user's token holdings
-            showToast('Portfolio feature coming soon!', 'success');
-        }
-
-        // Listen for account changes
-        if (window.ethereum) {
-            window.ethereum.on('accountsChanged', (accounts) => {
-                if (accounts.length === 0) {
-                    userAddress = null;
-                    signer = null;
-                    document.getElementById('connectWallet').textContent = 'Connect Wallet';
-                } else {
-                    connectWallet();
-                }
-            });
-            
-            window.ethereum.on('chainChanged', () => {
-                window.location.reload();
-            });
         }
 
         // Initialize on load
