@@ -91,6 +91,23 @@
             color: var(--text);
         }
 
+        .wallet-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .eth-balance {
+            display: none;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 82, 255, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
         .wallet-btn {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
@@ -308,6 +325,19 @@
             font-size: 0.9rem;
         }
 
+        .token-balance-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 220, 130, 0.1);
+            color: var(--success);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid var(--success);
+        }
+
         .token-stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -432,6 +462,56 @@
             resize: vertical;
         }
 
+        .balance-info {
+            background: rgba(0, 82, 255, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .balance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .balance-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .balance-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .balance-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .max-wallet-warning {
+            background: rgba(255, 184, 0, 0.1);
+            border: 1px solid var(--warning);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .max-wallet-warning.show {
+            display: block;
+        }
+
+        .warning-icon {
+            color: var(--warning);
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
         .loading {
             display: inline-block;
             width: 20px;
@@ -474,6 +554,10 @@
             border-color: var(--danger);
         }
 
+        .toast.warning {
+            border-color: var(--warning);
+        }
+
         .toast-icon {
             width: 24px;
             height: 24px;
@@ -494,6 +578,33 @@
             color: white;
         }
 
+        .toast.warning .toast-icon {
+            background: var(--warning);
+            color: white;
+        }
+
+        .amount-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .amount-btn {
+            background: var(--border);
+            color: var(--text);
+            border: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .amount-btn:hover {
+            background: var(--primary);
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 0 1rem;
@@ -510,6 +621,16 @@
             .nav-links {
                 display: none;
             }
+
+            .wallet-info {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .eth-balance {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
         }
     </style>
 </head>
@@ -522,7 +643,10 @@
                 <div class="nav-links">
                     <a href="#tokens" class="nav-link">Explore</a>
                     <a href="#" class="nav-link" onclick="openModal('createModal'); return false;">Create</a>
-                    <button class="wallet-btn" id="connectWallet">Connect Wallet</button>
+                    <div class="wallet-info">
+                        <div class="eth-balance" id="ethBalance">0.0000 ETH</div>
+                        <button class="wallet-btn" id="connectWallet">Connect Wallet</button>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -633,26 +757,32 @@
                 <button class="close-btn" onclick="closeModal('tradeModal')">&times;</button>
             </div>
             
-            <!-- Token Info -->
-            <div style="margin-bottom: 2rem; padding: 1rem; background: var(--dark); border-radius: 12px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Symbol</div>
-                        <div id="tradeTokenSymbol" style="font-weight: 600;"></div>
+            <!-- Token Balance Info -->
+            <div class="balance-info">
+                <div class="balance-grid">
+                    <div class="balance-item">
+                        <span class="balance-label">Your Balance</span>
+                        <span class="balance-value" id="userTokenBalance">0.0000</span>
                     </div>
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Price</div>
-                        <div id="tradeTokenPrice" style="font-weight: 600;"></div>
+                    <div class="balance-item">
+                        <span class="balance-label">Max Wallet</span>
+                        <span class="balance-value" id="maxWalletLimit">0.0000</span>
                     </div>
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Market Cap</div>
-                        <div id="tradeTokenMarketCap" style="font-weight: 600;"></div>
+                    <div class="balance-item">
+                        <span class="balance-label">Price</span>
+                        <span class="balance-value" id="tradeTokenPrice">0.0000 ETH</span>
                     </div>
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Liquidity</div>
-                        <div id="tradeTokenLiquidity" style="font-weight: 600;"></div>
+                    <div class="balance-item">
+                        <span class="balance-label">Market Cap</span>
+                        <span class="balance-value" id="tradeTokenMarketCap">$0</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Max Wallet Warning -->
+            <div class="max-wallet-warning" id="maxWalletWarning">
+                <span class="warning-icon">⚠️</span>
+                <span>This purchase would exceed the maximum wallet limit. Please reduce your amount.</span>
             </div>
 
             <!-- Trade Panel -->
@@ -662,9 +792,17 @@
                     <button class="btn-secondary" style="padding: 0.75rem;" id="sellTab" onclick="setTradeMode('sell')">Sell</button>
                 </div>
                 
+                <!-- Quick Amount Buttons -->
+                <div class="amount-buttons">
+                    <button type="button" class="amount-btn" onclick="setQuickAmount(0.001)">0.001</button>
+                    <button type="button" class="amount-btn" onclick="setQuickAmount(0.01)">0.01</button>
+                    <button type="button" class="amount-btn" onclick="setQuickAmount(0.1)">0.1</button>
+                    <button type="button" class="amount-btn" onclick="setQuickAmount(1)">1</button>
+                </div>
+                
                 <form id="tradeForm">
                     <div style="position: relative; margin-bottom: 1rem;">
-                        <input type="number" class="form-input" id="tradeAmount" placeholder="0.0" step="0.001" min="0.001" required>
+                        <input type="number" class="form-input" id="tradeAmount" placeholder="0.0" step="0.0001" min="0.0001" required>
                         <span style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);" id="tradeSuffix">ETH</span>
                     </div>
                     
@@ -673,9 +811,13 @@
                             <span style="color: var(--text-secondary);">You will receive</span>
                             <span id="receiveAmount">0 TOKENS</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                             <span style="color: var(--text-secondary);">Platform fee (1%)</span>
                             <span id="platformFee">0 ETH</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-weight: 600;">
+                            <span style="color: var(--text-secondary);">New Balance</span>
+                            <span id="newBalance">0 TOKENS</span>
                         </div>
                     </div>
                     
@@ -710,14 +852,18 @@
         const ERC20_ABI = [
             "function approve(address spender, uint256 amount) returns (bool)",
             "function balanceOf(address account) view returns (uint256)",
-            "function allowance(address owner, address spender) view returns (uint256)"
+            "function allowance(address owner, address spender) view returns (uint256)",
+            "function totalSupply() view returns (uint256)",
+            "function decimals() view returns (uint8)"
         ];
 
         // Global variables
         let provider, signer, factory, userAddress;
         let currentToken = null;
         let currentTokenDetails = null;
+        let currentTokenContract = null;
         let tradeMode = 'buy';
+        let userTokenBalances = {};
 
         // Helper functions
         function openModal(modalId) {
@@ -734,14 +880,14 @@
             const msg = document.getElementById('toastMessage');
             
             toast.className = 'toast ' + type;
-            icon.textContent = type === 'success' ? '✓' : '✕';
+            icon.textContent = type === 'success' ? '✓' : type === 'warning' ? '!' : '✕';
             msg.textContent = message;
             
             toast.classList.add('show');
             
             setTimeout(() => {
                 toast.classList.remove('show');
-            }, 3000);
+            }, 4000);
         }
 
         function formatNumber(num) {
@@ -751,16 +897,91 @@
             return num.toFixed(2);
         }
 
+        function setQuickAmount(amount) {
+            document.getElementById('tradeAmount').value = amount;
+            updateTradePreview();
+        }
+
+        // Update ETH balance display
+        async function updateEthBalance() {
+            if (!userAddress || !provider) return;
+            
+            try {
+                const balance = await provider.getBalance(userAddress);
+                const ethBalance = parseFloat(ethers.utils.formatEther(balance));
+                document.getElementById('ethBalance').textContent = ethBalance.toFixed(4) + ' ETH';
+                document.getElementById('ethBalance').style.display = 'block';
+            } catch (error) {
+                console.error('Error updating ETH balance:', error);
+            }
+        }
+
+        // Load token balances for all displayed tokens
+        async function loadAllTokenBalances(tokenAddresses) {
+            if (!userAddress || !provider) return;
+            
+            for (const address of tokenAddresses) {
+                try {
+                    const tokenContract = new ethers.Contract(address, ERC20_ABI, provider);
+                    const balance = await tokenContract.balanceOf(userAddress);
+                    userTokenBalances[address] = balance;
+                } catch (error) {
+                    console.error('Error loading balance for token:', address, error);
+                    userTokenBalances[address] = ethers.BigNumber.from(0);
+                }
+            }
+        }
+
+        // Load token details including max wallet
+        async function loadTokenDetailsForTrade(tokenAddress) {
+            try {
+                currentTokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+                
+                // Get user balance
+                let userBalance = ethers.BigNumber.from(0);
+                if (userAddress) {
+                    userBalance = await currentTokenContract.balanceOf(userAddress);
+                }
+                
+                // Get total supply
+                const totalSupply = await currentTokenContract.totalSupply();
+                
+                // Calculate max wallet (2% of total supply)
+                const maxWallet = totalSupply.mul(2).div(100);
+                
+                return { userBalance, maxWallet, totalSupply };
+            } catch (error) {
+                console.error('Error loading token details:', error);
+                return { 
+                    userBalance: ethers.BigNumber.from(0), 
+                    maxWallet: ethers.BigNumber.from(0), 
+                    totalSupply: ethers.BigNumber.from(0) 
+                };
+            }
+        }
+
         // Trading functions
-        function openTradeModal(tokenAddress, details) {
+        async function openTradeModal(tokenAddress, details) {
             currentToken = tokenAddress;
             currentTokenDetails = details;
             
             document.getElementById('tradeTokenName').textContent = details.info.name;
-            document.getElementById('tradeTokenSymbol').textContent = details.info.symbol;
             document.getElementById('tradeTokenPrice').textContent = parseFloat(ethers.utils.formatEther(details.price)).toFixed(8) + ' ETH';
             document.getElementById('tradeTokenMarketCap').textContent = '$' + formatNumber(parseFloat(ethers.utils.formatEther(details.info.marketCap)));
-            document.getElementById('tradeTokenLiquidity').textContent = parseFloat(ethers.utils.formatEther(details.curve.ethReserve)).toFixed(4) + ' ETH';
+            
+            // Load additional token details
+            const tokenInfo = await loadTokenDetailsForTrade(tokenAddress);
+            
+            // Update balance displays
+            if (userAddress) {
+                const userBalance = parseFloat(ethers.utils.formatEther(tokenInfo.userBalance));
+                document.getElementById('userTokenBalance').textContent = userBalance.toFixed(4) + ' ' + details.info.symbol;
+            } else {
+                document.getElementById('userTokenBalance').textContent = 'Connect wallet';
+            }
+            
+            const maxWallet = parseFloat(ethers.utils.formatEther(tokenInfo.maxWallet));
+            document.getElementById('maxWalletLimit').textContent = maxWallet.toFixed(4) + ' ' + details.info.symbol;
             
             setTradeMode('buy');
             openModal('tradeModal');
@@ -793,28 +1014,61 @@
             updateTradePreview();
         }
 
-        function updateTradePreview() {
+        async function updateTradePreview() {
             const amount = parseFloat(document.getElementById('tradeAmount').value) || 0;
             const receiveElement = document.getElementById('receiveAmount');
             const feeElement = document.getElementById('platformFee');
+            const newBalanceElement = document.getElementById('newBalance');
+            const warningBox = document.getElementById('maxWalletWarning');
+            const tradeButton = document.getElementById('tradeButton');
             
             if (amount <= 0 || !currentTokenDetails) {
                 receiveElement.textContent = '0 ' + (tradeMode === 'buy' ? 'TOKENS' : 'ETH');
                 feeElement.textContent = '0 ETH';
+                newBalanceElement.textContent = '0 TOKENS';
+                warningBox.classList.remove('show');
+                tradeButton.disabled = false;
                 return;
             }
             
             const fee = amount * 0.01;
+            let willExceedLimit = false;
+            
+            // Get current token info
+            const tokenInfo = await loadTokenDetailsForTrade(currentToken);
+            const currentBalance = parseFloat(ethers.utils.formatEther(tokenInfo.userBalance));
+            const maxWallet = parseFloat(ethers.utils.formatEther(tokenInfo.maxWallet));
             
             if (tradeMode === 'buy') {
                 const tokensOut = (amount - fee) / parseFloat(ethers.utils.formatEther(currentTokenDetails.price));
-                receiveElement.textContent = tokensOut.toFixed(2) + ' ' + currentTokenDetails.info.symbol;
+                receiveElement.textContent = tokensOut.toFixed(4) + ' ' + currentTokenDetails.info.symbol;
                 feeElement.textContent = fee.toFixed(6) + ' ETH';
+                
+                const newBalance = currentBalance + tokensOut;
+                newBalanceElement.textContent = newBalance.toFixed(4) + ' ' + currentTokenDetails.info.symbol;
+                
+                // Check max wallet limit
+                willExceedLimit = newBalance > maxWallet;
+                
             } else {
                 const ethOut = amount * parseFloat(ethers.utils.formatEther(currentTokenDetails.price));
                 const ethAfterFee = ethOut * 0.99;
                 receiveElement.textContent = ethAfterFee.toFixed(6) + ' ETH';
                 feeElement.textContent = (ethOut * 0.01).toFixed(6) + ' ETH';
+                
+                const newBalance = Math.max(0, currentBalance - amount);
+                newBalanceElement.textContent = newBalance.toFixed(4) + ' ' + currentTokenDetails.info.symbol;
+            }
+            
+            // Show/hide warning and disable button if limit exceeded
+            if (willExceedLimit) {
+                warningBox.classList.add('show');
+                tradeButton.disabled = true;
+                tradeButton.textContent = 'Exceeds Max Wallet';
+            } else {
+                warningBox.classList.remove('show');
+                tradeButton.disabled = false;
+                tradeButton.textContent = tradeMode === 'buy' ? 'Buy' : 'Sell';
             }
         }
 
@@ -828,6 +1082,7 @@
             
             const button = e.target.querySelector('button[type="submit"]');
             const originalText = button.textContent;
+            
             button.disabled = true;
             button.textContent = 'Processing...';
             
@@ -836,10 +1091,22 @@
                 
                 if (tradeMode === 'buy') {
                     const value = ethers.utils.parseEther(amount.toString());
+                    
+                    // Check if purchase would exceed max wallet before proceeding
+                    const tokenInfo = await loadTokenDetailsForTrade(currentToken);
+                    const currentBalance = parseFloat(ethers.utils.formatEther(tokenInfo.userBalance));
+                    const maxWallet = parseFloat(ethers.utils.formatEther(tokenInfo.maxWallet));
+                    const tokensOut = (amount * 0.99) / parseFloat(ethers.utils.formatEther(currentTokenDetails.price));
+                    
+                    if (currentBalance + tokensOut > maxWallet) {
+                        throw new Error('Transaction would exceed maximum wallet limit');
+                    }
+                    
                     const tx = await factory.buyToken(currentToken, 0, { value });
                     showToast('Buying tokens... Please wait', 'success');
                     await tx.wait();
                     showToast('Purchase successful!', 'success');
+                    
                 } else {
                     const tokenContract = new ethers.Contract(currentToken, ERC20_ABI, signer);
                     const tokenAmount = ethers.utils.parseEther(amount.toString());
@@ -859,7 +1126,9 @@
                 
                 document.getElementById('tradeAmount').value = '';
                 updateTradePreview();
+                updateEthBalance();
                 
+                // Refresh token data
                 await loadKnownTokens([
                     "0x14610B22f3DBF799e7F28006E1a517d4e7bc619a",
                     "0xE5e873f0B59A70757E9474BD8F4449fC158D58Fc"
@@ -867,7 +1136,17 @@
                 
             } catch (error) {
                 console.error('Trade error:', error);
-                showToast(error.reason || 'Transaction failed', 'error');
+                let errorMessage = 'Transaction failed';
+                
+                if (error.message && error.message.includes('max wallet')) {
+                    errorMessage = 'Transaction exceeds maximum wallet limit';
+                } else if (error.reason) {
+                    errorMessage = error.reason;
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                showToast(errorMessage, 'error');
             } finally {
                 button.disabled = false;
                 button.textContent = originalText;
@@ -894,7 +1173,14 @@
                 document.getElementById('connectWallet').textContent = 
                     userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
                 
+                updateEthBalance();
                 showToast('Wallet connected!', 'success');
+                
+                // Reload tokens to show balances
+                await loadKnownTokens([
+                    "0x14610B22f3DBF799e7F28006E1a517d4e7bc619a",
+                    "0xE5e873f0B59A70757E9474BD8F4449fC158D58Fc"
+                ]);
             } catch (error) {
                 console.error('Error:', error);
                 showToast('Failed to connect wallet', 'error');
@@ -921,6 +1207,11 @@
             const tokensGrid = document.getElementById('tokensGrid');
             tokensGrid.innerHTML = '';
             
+            // Load balances if wallet is connected
+            if (userAddress) {
+                await loadAllTokenBalances(tokenAddresses);
+            }
+            
             for (const address of tokenAddresses) {
                 try {
                     const tempFactory = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, provider);
@@ -933,7 +1224,7 @@
             }
         }
 
-        // Create token card
+        // Create token card with balance display
         function createTokenCard(address, details) {
             const card = document.createElement('div');
             card.className = 'token-card';
@@ -941,7 +1232,12 @@
             const info = details.info;
             const price = ethers.utils.formatEther(details.price);
             
+            // Check if user has balance
+            const userBalance = userTokenBalances[address];
+            const hasBalance = userBalance && !userBalance.isZero();
+            
             card.innerHTML = `
+                ${hasBalance ? `<div class="token-balance-badge">${parseFloat(ethers.utils.formatEther(userBalance)).toFixed(2)} ${info.symbol}</div>` : ''}
                 <div class="token-header">
                     <div class="token-image">${info.symbol.charAt(0)}</div>
                     <div class="token-info">
@@ -1041,6 +1337,15 @@
             document.getElementById('tradeForm').addEventListener('submit', handleTrade);
             document.getElementById('tradeAmount').addEventListener('input', updateTradePreview);
 
+            // Filter tabs
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    // Filter logic would go here
+                });
+            });
+
             // Load initial data
             try {
                 provider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org');
@@ -1062,6 +1367,28 @@
 
         // Initialize on load
         window.addEventListener('DOMContentLoaded', init);
+
+        // Update balances when account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', async (accounts) => {
+                if (accounts.length === 0) {
+                    userAddress = null;
+                    document.getElementById('connectWallet').textContent = 'Connect Wallet';
+                    document.getElementById('ethBalance').style.display = 'none';
+                    userTokenBalances = {};
+                } else {
+                    userAddress = accounts[0];
+                    document.getElementById('connectWallet').textContent = 
+                        userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
+                    updateEthBalance();
+                }
+                
+                await loadKnownTokens([
+                    "0x14610B22f3DBF799e7F28006E1a517d4e7bc619a",
+                    "0xE5e873f0B59A70757E9474BD8F4449fC158D58Fc"
+                ]);
+            });
+        }
     </script>
 </body>
 </html>
