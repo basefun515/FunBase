@@ -830,6 +830,8 @@
             "function totalTokensCreated() view returns (uint256)",
             "function totalGraduatedTokens() view returns (uint256)",
             "function getTokenDetails(address token) view returns (tuple(string name, string symbol, string description, string imageUrl, string twitter, string telegram, string website, address creator, uint256 createdAt, uint256 marketCap, bool isGraduated) info, tuple(uint256 ethReserve, uint256 tokenReserve, uint256 k, uint256 totalRaised, uint256 graduationTarget) curve, tuple(uint256 totalVolume, uint256 buyCount, uint256 sellCount, uint256 uniqueTraders, uint256 highestPrice, uint256 lastPrice) stats, uint256 price)",
+            "function calculateTokensOut(address token, uint256 ethIn) view returns (uint256)",
+            "function getMaxWalletLimit(address token) view returns (uint256)",
             "event TokenCreated(address indexed token, address indexed creator, string name, string symbol, uint256 timestamp)"
         ];
 
@@ -838,7 +840,10 @@
             "function balanceOf(address account) view returns (uint256)",
             "function allowance(address owner, address spender) view returns (uint256)",
             "function totalSupply() view returns (uint256)",
-            "function maxWallet() view returns (uint256)"
+            "function maxWallet() view returns (uint256)",
+            "function decimals() view returns (uint8)",
+            "function name() view returns (string)",
+            "function symbol() view returns (string)"
         ];
 
         // Global variables
@@ -849,6 +854,122 @@
         let tradeMode = 'buy';
         let maxWalletLimit = null;
         let userTokenBalance = null;
+        let totalSupply = null;
+
+        // Debug and testing functions
+        async function testDirectTokenCall() {
+            if (!currentToken || !provider) {
+                document.getElementById('testResults').innerHTML = 'No token selected or provider not connected';
+                return;
+            }
+
+            const results = [];
+            const testResults = document.getElementById('testResults');
+            
+            try {
+                results.push('=== DIRECT TOKEN CALLS ===');
+                
+                const tokenContract = new ethers.Contract(currentToken, ERC20_ABI, provider);
+                
+                try {
+                    const name = await tokenContract.name();
+                    results.push(`Name: ${name}`);
+                } catch (e) { results.push(`Name: ERROR - ${e.message}`); }
+                
+                try {
+                    const symbol = await tokenContract.symbol();
+                    results.push(`Symbol: ${symbol}`);
+                } catch (e) { results.push(`Symbol: ERROR - ${e.message}`); }
+                
+                try {
+                    const decimals = await tokenContract.decimals();
+                    results.push(`Decimals: ${decimals}`);
+                } catch (e) { results.push(`Decimals: ERROR - ${e.message}`); }
+                
+                try {
+                    const totalSupply = await tokenContract.totalSupply();
+                    results.push(`Total Supply: ${ethers.utils.formatEther(totalSupply)}`);
+                } catch (e) { results.push(`Total Supply: ERROR - ${e.message}`); }
+                
+                try {
+                    const maxWallet = await tokenContract.maxWallet();
+                    results.push(`Max Wallet: ${ethers.utils.formatEther(maxWallet)}`);
+                } catch (e) { results.push(`Max Wallet: ERROR - ${e.message}`); }
+                
+                if (userAddress) {
+                    try {
+                        const balance = await tokenContract.balanceOf(userAddress);
+                        results.push(`Your Balance: ${ethers.utils.formatEther(balance)}`);
+                    } catch (e) { results.push(`Your Balance: ERROR - ${e.message}`); }
+                }
+                
+            } catch (error) {
+                results.push(`GENERAL ERROR: ${error.message}`);
+            }
+            
+            testResults.innerHTML = results.join('<br>');
+        }
+
+        async function simulateBuyCalculation() {
+            if (!currentToken || !factory) {
+                document.getElementById('testResults').innerHTML = 'No token selected or factory not connected';
+                return;
+            }
+
+            const results = [];
+            const testResults = document.getElementById('testResults');
+            
+            try {
+                results.push('=== BUY SIMULATION ===');
+                
+                const ethAmounts = [0.001, 0.01, 0.1];
+                
+                for (const ethAmount of ethAmounts) {
+                    try {
+                        results.push(`--- Testing ${ethAmount} ETH ---`);
+                        
+                        // Try to calculate tokens out
+                        let tokensOut = 'Unknown';
+                        try {
+                            if (factory.calculateTokensOut) {
+                                const calculated = await factory.calculateTokensOut(currentToken, ethers.utils.parseEther(ethAmount.toString()));
+                                tokensOut = ethers.utils.formatEther(calculated);
+                            }
+                        } catch (e) {
+                            results.push(`Calculate tokens: ERROR - ${e.message}`);
+                        }
+                        
+                        results.push(`ETH In: ${ethAmount}`);
+                        results.push(`Tokens Out: ${tokensOut}`);
+                        
+                        // Try gas estimation
+                        try {
+                            if (signer) {
+                                const factoryWithSigner = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
+                                const gasEstimate = await factoryWithSigner.estimateGas.buyToken(
+                                    currentToken, 
+                                    0, 
+                                    { value: ethers.utils.parseEther(ethAmount.toString()) }
+                                );
+                                results.push(`Gas Estimate: ${gasEstimate.toString()}`);
+                            }
+                        } catch (e) {
+                            results.push(`Gas Estimation: ERROR - ${e.message}`);
+                            if (e.reason) results.push(`Reason: ${e.reason}`);
+                        }
+                        
+                        results.push('');
+                    } catch (error) {
+                        results.push(`Error testing ${ethAmount}: ${error.message}`);
+                    }
+                }
+                
+            } catch (error) {
+                results.push(`SIMULATION ERROR: ${error.message}`);
+            }
+            
+            testResults.innerHTML = results.join('<br>');
+        }
 
         // Debug functions
         function toggleDebug() {
@@ -865,6 +986,16 @@
                 parseFloat(ethers.utils.formatEther(userTokenBalance)).toFixed(4) + ' tokens' : '0 tokens';
             document.getElementById('debugMaxWallet').textContent = maxWalletLimit ? 
                 parseFloat(ethers.utils.formatEther(maxWalletLimit)).toFixed(4) + ' tokens' : 'Loading...';
+            document.getElementById('debugTotalSupply').textContent = totalSupply ? 
+                parseFloat(ethers.utils.formatEther(totalSupply)).toFixed(4) + ' tokens' : 'Loading...';
+            
+            // Calculate max wallet percentage
+            if (maxWalletLimit && totalSupply) {
+                const maxWalletPercent = (parseFloat(ethers.utils.formatEther(maxWalletLimit)) / parseFloat(ethers.utils.formatEther(totalSupply))) * 100;
+                document.getElementById('debugMaxWalletPercent').textContent = maxWalletPercent.toFixed(2) + '%';
+            } else {
+                document.getElementById('debugMaxWalletPercent').textContent = 'Loading...';
+            }
             
             const amount = parseFloat(document.getElementById('tradeAmount')?.value || 0);
             document.getElementById('debugTradeAmount').textContent = amount.toString();
@@ -879,10 +1010,12 @@
                     const newHoldings = currentHoldings + tokensFromTrade;
                     const maxWallet = maxWalletLimit ? parseFloat(ethers.utils.formatEther(maxWalletLimit)) : 0;
                     
+                    document.getElementById('debugTokensFromTrade').textContent = tokensFromTrade.toFixed(4) + ' tokens';
                     document.getElementById('debugResultingHoldings').textContent = newHoldings.toFixed(4) + ' tokens';
                     document.getElementById('debugWillExceed').textContent = (newHoldings > maxWallet) ? 'YES' : 'No';
                 } else {
                     const newHoldings = currentHoldings - amount;
+                    document.getElementById('debugTokensFromTrade').textContent = '-' + amount.toFixed(4) + ' tokens';
                     document.getElementById('debugResultingHoldings').textContent = newHoldings.toFixed(4) + ' tokens';
                     document.getElementById('debugWillExceed').textContent = 'No';
                 }
@@ -934,21 +1067,32 @@
                 // Try to get max wallet limit
                 try {
                     maxWalletLimit = await currentTokenContract.maxWallet();
+                    console.log('Max wallet limit found:', ethers.utils.formatEther(maxWalletLimit));
                 } catch (error) {
                     console.log('No maxWallet function found, assuming no limit');
                     maxWalletLimit = null;
                 }
 
+                // Get total supply for comparison
+                let totalSupply = null;
+                try {
+                    totalSupply = await currentTokenContract.totalSupply();
+                    console.log('Total supply:', ethers.utils.formatEther(totalSupply));
+                } catch (error) {
+                    console.log('Could not get total supply');
+                }
+
                 // Get user's current balance if wallet is connected
                 if (userAddress) {
                     userTokenBalance = await currentTokenContract.balanceOf(userAddress);
+                    console.log('User balance:', ethers.utils.formatEther(userTokenBalance));
                 }
 
                 updateDebugInfo();
-                return { maxWalletLimit, userTokenBalance };
+                return { maxWalletLimit, userTokenBalance, totalSupply };
             } catch (error) {
                 console.error('Error loading token details:', error);
-                return { maxWalletLimit: null, userTokenBalance: null };
+                return { maxWalletLimit: null, userTokenBalance: null, totalSupply: null };
             }
         }
 
