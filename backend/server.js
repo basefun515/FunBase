@@ -506,17 +506,25 @@
         /* Debug panel styles */
         .debug-panel {
             position: fixed;
-            top: 100px;
+            top: 120px;
             right: 20px;
-            width: 300px;
+            width: 350px;
             background: var(--light);
-            border: 1px solid var(--border);
+            border: 2px solid var(--primary);
             border-radius: 12px;
-            padding: 1rem;
+            padding: 1.5rem;
             font-size: 0.85rem;
             z-index: 999;
-            max-height: 60vh;
+            max-height: 70vh;
             overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 82, 255, 0.2);
+        }
+
+        .debug-panel h4 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 1.1rem;
         }
 
         .debug-toggle {
@@ -526,10 +534,18 @@
             background: var(--primary);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1.5rem;
             border-radius: 8px;
             cursor: pointer;
             z-index: 1000;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 82, 255, 0.3);
+            transition: all 0.3s;
+        }
+
+        .debug-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
         }
 
         .warning-box {
@@ -579,20 +595,23 @@
                 display: none;
             }
 
-            .debug-panel {
-                position: relative;
-                top: auto;
-                right: auto;
-                width: 100%;
-                margin: 1rem 0;
+            .debug-toggle {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                display: block;
+                margin: 0;
+                z-index: 1001;
             }
 
-            .debug-toggle {
-                position: relative;
-                top: auto;
-                right: auto;
-                display: block;
-                margin: 1rem auto;
+            .debug-panel {
+                position: fixed;
+                top: 80px;
+                left: 20px;
+                right: 20px;
+                width: auto;
+                max-height: 50vh;
+                z-index: 1000;
             }
         }
     </style>
